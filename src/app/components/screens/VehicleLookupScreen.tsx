@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme, Btn, Icon, UKPlate, Logo } from '../tp';
-import { Car3D } from '../Car3D';
+import { Pilot } from '../Pilot';
 
 type LookupState = 'input' | 'loading' | 'success' | 'error';
 const VALID_PLATES = ['DS18JRX', 'AB12CDE', 'LK23ABC'];
@@ -30,7 +30,9 @@ export function VehicleLookupScreen() {
   if (state === 'loading') {
     return (
       <div style={{ minHeight: '100dvh', background: t.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 28, padding: '0 24px' }}>
-        <Car3D size="md" glowColor="#3BA9FF" variant="contained" entered sweep style={{ width: '100%', maxWidth: 340 }} />
+        <div style={{ width: '100%', maxWidth: 340, display: 'flex', justifyContent: 'center' }}>
+          <Pilot size={240} mode="speed" />
+        </div>
         <div style={{ width: '100%', maxWidth: 280, height: 2, background: t.cardHi, borderRadius: 999, overflow: 'hidden', position: 'relative' }}>
           <motion.div
             animate={{ x: ['-100%', '200%'] }}
@@ -51,7 +53,9 @@ export function VehicleLookupScreen() {
   if (state === 'success') {
     return (
       <div style={{ minHeight: '100dvh', background: t.bg, display: 'flex', flexDirection: 'column', padding: '48px 24px 40px', gap: 24 }}>
-        <Car3D size="md" glowColor="#FDC500" variant="bare" entered sweep style={{ width: '100%' }} />
+        <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+          <Pilot size={240} mode="calm" trigger="plate_verified" />
+        </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
           <UKPlate value={plate || 'DS18JRX'} size="lg" validated />
           <motion.div
@@ -196,14 +200,9 @@ export function VehicleLookupScreen() {
               transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
               style={{ width: '100%' }}
             >
-              <Car3D
-                size="lg"
-                glowColor="#FDC500"
-                variant="bare"
-                entered={false}
-                sweep
-                style={{ width: '100%' }}
-              />
+              <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                <Pilot size={240} mode="calm" showScene={false} />
+              </div>
             </motion.div>
           ) : (
             <motion.div

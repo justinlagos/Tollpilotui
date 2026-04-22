@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from 'react-router';
 import { useTheme, AppHeader, Btn, Icon, Card, MiniMap, SectionLabel } from '../tp';
+import { Pilot } from '../Pilot';
 
 export function TripDetailScreen() {
   const navigate = useNavigate();
@@ -36,6 +37,16 @@ export function TripDetailScreen() {
       <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
         {/* Map */}
         <MiniMap t={t} theme={theme} size="md" showULEZ={false} />
+
+        {/* Pilot hero — celebrates if money was saved */}
+        {trip.saved > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, marginTop: 4 }}>
+            <Pilot size={140} mode="calm" trigger="trip_end_saved" showScene={false} />
+            <div style={{ fontSize: 13, fontWeight: 700, color: t.success, letterSpacing: '0.04em' }}>
+              YOU SAVED £{trip.saved.toFixed(2)}
+            </div>
+          </div>
+        )}
 
         {/* Route */}
         <Card t={t}>

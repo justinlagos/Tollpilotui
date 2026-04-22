@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme, Logo, Btn, Icon } from '../tp';
-import { Car3D } from '../Car3D';
+import { Pilot } from '../Pilot';
 
 const SLIDES = [
   {
@@ -240,14 +240,8 @@ export function OnboardingScreen() {
               {/* ── Slide 2: Car hero (bare — sits on page bg) ── */}
               {slide === 2 && (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
-                  {/* Car — transparent/bare, grounded by blue glow */}
-                  <Car3D
-                    size="lg"
-                    glowColor="#3BA9FF"
-                    variant="bare"
-                    entered
-                    sweep
-                  />
+                  {/* Pilot — hero character, plays plate_verified trigger */}
+                  <Pilot size={260} mode="calm" trigger="plate_verified" />
 
                   {/* Status chips — stagger in after car */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, width: '100%' }}>

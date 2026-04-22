@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router';
 import { useState, useEffect, useRef } from 'react';
 import { useTheme, AppHeader, Btn, Icon, Card, UKPlate, SectionLabel } from '../tp';
-import { Car3D } from '../Car3D';
+import { Pilot } from '../Pilot';
 
 export function VehicleDetailsScreen() {
   const navigate = useNavigate();
@@ -54,14 +54,9 @@ export function VehicleDetailsScreen() {
             transformOrigin: 'center top',
             transition: 'transform 0.05s linear, opacity 0.05s linear',
           }}>
-            <Car3D
-              size="lg"
-              glowColor="#3BA9FF"
-              variant="contained"
-              entered
-              sweep
-              style={{ width: '100%' }}
-            />
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <Pilot size={240} mode="calm" />
+            </div>
           </div>
         </div>
 

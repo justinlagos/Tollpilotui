@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useTheme, Icon, Card, UKPlate, IconBadge, SectionLabel, BottomNav, AppHeader, Toggle, OfflineBanner } from '../tp';
+import { Pilot } from '../Pilot';
 
 const MONTHS = [
   { m: 'Nov', a: 38 }, { m: 'Dec', a: 52 }, { m: 'Jan', a: 67 },
@@ -69,6 +70,13 @@ export function DashboardScreen() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: t.textTer, letterSpacing: '0.08em' }}>YOUR VEHICLE</div>
             <Icon n="right" s={18} c={t.textTer} />
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <Pilot
+              size={140}
+              mode={motState === 'expired' || motState === 'due' ? 'alert' : 'calm'}
+              showScene={false}
+            />
           </div>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
             <UKPlate value="DS18JRX" size="sm" />

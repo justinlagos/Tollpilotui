@@ -1,14 +1,41 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { useTheme, AlertSheet, Icon, MiniMap } from '../tp';
+import { Pilot, PilotMode, PilotTrigger } from '../Pilot';
 
 type DriveState = 'normal' | 'approaching' | 'imminent' | 'entered' | 'rerouted' | 'no_charge';
+
+// Map drive state → Pilot mode
+const pilotModeFor = (ds: DriveState): PilotMode => {
+  switch (ds) {
+    case 'approaching':
+    case 'imminent':
+    case 'entered':
+      return 'alert';
+    case 'rerouted':
+    case 'no_charge':
+      return 'calm';
+    case 'normal':
+    default:
+      return 'speed';
+  }
+};
 
 export function DriveScreen() {
   const navigate = useNavigate();
   const { t, theme } = useTheme();
   const [driveState, setDriveState] = useState<DriveState>('approaching');
   const [speed] = useState(47);
+  const [pilotTrigger, setPilotTrigger] = useState<PilotTrigger | null>(null);
+  const prevDriveStateRef = useRef<DriveState>(driveState);
+
+  // Fire reroute_success celebration when user reroutes
+  useEffect(() => {
+    if (driveState === 'rerouted' && prevDriveStateRef.current !== 'rerouted') {
+      setPilotTrigger('reroute_success');
+    }
+    prevDriveStateRef.current = driveState;
+  }, [driveState]);
 
   const stateLabels: Record<DriveState, string> = {
     normal: 'On route', approaching: 'Zone approaching',
@@ -82,8 +109,27 @@ export function DriveScreen() {
         </button>
       </div>
 
-      {/* Speedometer */}
-      <div style={{ position: 'relative', zIndex: 10, display: 'flex', justifyContent: 'center', marginTop: 32 }}>
+      {/* Pilot + Speedometer row */}
+      <div style={{ position: 'relative', zIndex: 10, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 32 }}>
+        {/* Pilot — reactive to drive state */}
+        <div style={{
+          background: `${t.card}CC`, backdropFilter: 'blur(10px)',
+          border: `2px solid ${t.borderLi}`,
+          borderRadius: 20,
+          padding: 8,
+          boxShadow: `0 8px 32px rgba(0,0,0,0.3)`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Pilot
+            size={72}
+            mode={pilotModeFor(driveState)}
+            trigger={pilotTrigger}
+            onTriggerComplete={() => setPilotTrigger(null)}
+            showScene={false}
+          />
+        </div>
+
+        {/* Speedometer */}
         <div style={{
           width: 130, height: 130, borderRadius: '50%',
           background: `${t.card}CC`, backdropFilter: 'blur(10px)',

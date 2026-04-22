@@ -7,6 +7,7 @@ export function PilotDemoScreen() {
   const [mode, setMode] = useState<PilotMode>('calm');
   const [trigger, setTrigger] = useState<PilotTrigger | null>(null);
   const [size, setSize] = useState(200);
+  const [showScene, setShowScene] = useState(true);
 
   const handleTrigger = (triggerName: PilotTrigger) => {
     setTrigger(triggerName);
@@ -69,6 +70,7 @@ export function PilotDemoScreen() {
             size={size}
             trigger={trigger}
             onTriggerComplete={handleTriggerComplete}
+            showScene={showScene}
           />
         </div>
 
@@ -106,6 +108,28 @@ export function PilotDemoScreen() {
             <span>48px (Tab bar)</span>
             <span>140px (Dashboard)</span>
             <span>280px (Hero)</span>
+          </div>
+
+          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button
+              onClick={() => setShowScene(s => !s)}
+              style={{
+                padding: '10px 16px',
+                borderRadius: '8px',
+                border: `1px solid ${showScene ? t.accent : t.border}`,
+                background: showScene ? `${t.accent}22` : 'transparent',
+                color: showScene ? t.accent : t.textPri,
+                fontSize: '13px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: 'inherit',
+              }}
+            >
+              Scene overlays: {showScene ? 'ON' : 'OFF'}
+            </button>
+            <span style={{ fontSize: 12, color: t.textSec }}>
+              Turn off for small embeds (tab icon, drive corner)
+            </span>
           </div>
         </div>
 
