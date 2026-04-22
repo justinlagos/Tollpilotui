@@ -55,7 +55,7 @@ export function VehicleDetailsScreen() {
             transition: 'transform 0.05s linear, opacity 0.05s linear',
           }}>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <Pilot size={240} mode="calm" />
+              <Pilot size={120} mode="calm" showScene={false} />
             </div>
           </div>
         </div>

@@ -240,7 +240,7 @@ export function Pilot({
 
   const svgW = size;
   const svgH = size * 0.8;
-  const stageH = showScene ? size * 1.15 : svgH;
+  const stageH = showScene ? size * 1.15 : svgH * 1.05;
   const uid = React.useId();
 
   return (
@@ -251,7 +251,7 @@ export function Pilot({
         width: size,
         height: stageH,
         display: 'inline-block',
-        overflow: 'hidden',
+        overflow: showScene ? 'hidden' : 'visible',
         borderRadius: showScene ? 24 : 0,
         background: background ?? 'transparent',
       }}
@@ -262,17 +262,17 @@ export function Pilot({
       {showScene && (currentMode === 'calm' || currentMode === 'idle') && <DustParticles size={size} />}
       {showScene && currentMode === 'idle' && <SleepZ size={size} />}
 
-      {/* Ground glow */}
+      {/* Ground glow — subtler when embedded without scene */}
       <motion.div
         style={{
           position: 'absolute',
-          bottom: size * 0.06,
+          bottom: showScene ? size * 0.06 : size * 0.02,
           left: '50%',
-          width: size * 0.7,
-          height: size * 0.08,
+          width: showScene ? size * 0.7 : size * 0.5,
+          height: showScene ? size * 0.08 : size * 0.04,
           borderRadius: '50%',
           background: glowColorForMode(currentMode),
-          filter: `blur(${size * 0.08}px)`,
+          filter: `blur(${showScene ? size * 0.08 : size * 0.05}px)`,
           zIndex: 1,
           pointerEvents: 'none',
           translateX: '-50%',
@@ -280,12 +280,12 @@ export function Pilot({
         animate={{
           opacity:
             currentMode === 'celebrate'
-              ? [0.6, 1, 0.7, 0.6]
+              ? (showScene ? [0.6, 1, 0.7, 0.6] : [0.3, 0.55, 0.35, 0.3])
               : currentMode === 'alert'
-              ? [0.6, 1, 0.6]
+              ? (showScene ? [0.6, 1, 0.6] : [0.3, 0.55, 0.3])
               : currentMode === 'speed'
-              ? 0.5
-              : [0.4, 0.6, 0.4],
+              ? (showScene ? 0.5 : 0.3)
+              : (showScene ? [0.4, 0.6, 0.4] : [0.2, 0.35, 0.2]),
           scale:
             currentMode === 'celebrate'
               ? [1, 1.25, 1.1, 1]
@@ -300,21 +300,23 @@ export function Pilot({
         }}
       />
 
-      {/* Ground shadow */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: size * 0.09,
-          left: '50%',
-          width: size * 0.5,
-          height: size * 0.035,
-          borderRadius: '50%',
-          background: 'rgba(2, 6, 17, 0.5)',
-          zIndex: 2,
-          pointerEvents: 'none',
-          transform: 'translateX(-50%)',
-        }}
-      />
+      {/* Ground shadow — only when full scene is on */}
+      {showScene && (
+        <div
+          style={{
+            position: 'absolute',
+            bottom: size * 0.09,
+            left: '50%',
+            width: size * 0.5,
+            height: size * 0.035,
+            borderRadius: '50%',
+            background: 'rgba(2, 6, 17, 0.5)',
+            zIndex: 2,
+            pointerEvents: 'none',
+            transform: 'translateX(-50%)',
+          }}
+        />
+      )}
 
       {/* PILOT SVG — locked character */}
       <motion.svg

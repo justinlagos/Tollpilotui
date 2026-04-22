@@ -110,24 +110,15 @@ export function DriveScreen() {
       </div>
 
       {/* Pilot + Speedometer row */}
-      <div style={{ position: 'relative', zIndex: 10, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 16, marginTop: 32 }}>
-        {/* Pilot — reactive to drive state */}
-        <div style={{
-          background: `${t.card}CC`, backdropFilter: 'blur(10px)',
-          border: `2px solid ${t.borderLi}`,
-          borderRadius: 20,
-          padding: 8,
-          boxShadow: `0 8px 32px rgba(0,0,0,0.3)`,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <Pilot
-            size={72}
-            mode={pilotModeFor(driveState)}
-            trigger={pilotTrigger}
-            onTriggerComplete={() => setPilotTrigger(null)}
-            showScene={false}
-          />
-        </div>
+      <div style={{ position: 'relative', zIndex: 10, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 32 }}>
+        {/* Pilot — no box, floats freely */}
+        <Pilot
+          size={64}
+          mode={pilotModeFor(driveState)}
+          trigger={pilotTrigger}
+          onTriggerComplete={() => setPilotTrigger(null)}
+          showScene={false}
+        />
 
         {/* Speedometer */}
         <div style={{

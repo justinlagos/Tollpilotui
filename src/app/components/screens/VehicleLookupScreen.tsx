@@ -31,7 +31,7 @@ export function VehicleLookupScreen() {
     return (
       <div style={{ minHeight: '100dvh', background: t.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 28, padding: '0 24px' }}>
         <div style={{ width: '100%', maxWidth: 340, display: 'flex', justifyContent: 'center' }}>
-          <Pilot size={240} mode="speed" />
+          <Pilot size={120} mode="speed" showScene={false} />
         </div>
         <div style={{ width: '100%', maxWidth: 280, height: 2, background: t.cardHi, borderRadius: 999, overflow: 'hidden', position: 'relative' }}>
           <motion.div
@@ -54,7 +54,7 @@ export function VehicleLookupScreen() {
     return (
       <div style={{ minHeight: '100dvh', background: t.bg, display: 'flex', flexDirection: 'column', padding: '48px 24px 40px', gap: 24 }}>
         <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-          <Pilot size={240} mode="calm" trigger="plate_verified" />
+          <Pilot size={120} mode="calm" trigger="plate_verified" showScene={false} />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
           <UKPlate value={plate || 'DS18JRX'} size="lg" validated />
@@ -201,7 +201,7 @@ export function VehicleLookupScreen() {
               style={{ width: '100%' }}
             >
               <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-                <Pilot size={240} mode="calm" showScene={false} />
+                <Pilot size={100} mode="calm" showScene={false} />
               </div>
             </motion.div>
           ) : (
@@ -213,7 +213,9 @@ export function VehicleLookupScreen() {
               transition={{ duration: 0.3 }}
               style={{ textAlign: 'center', padding: '0 32px' }}
             >
-              <div style={{ fontSize: 52, marginBottom: 12, opacity: 0.15 }}>🚗</div>
+              <div style={{ opacity: 0.2, marginBottom: 12 }}>
+                <Pilot size={64} mode="idle" showScene={false} />
+              </div>
               <div style={{ fontSize: 14, color: t.textTer, lineHeight: 1.6 }}>
                 Type your registration above{'\n'}and your car will appear here
               </div>

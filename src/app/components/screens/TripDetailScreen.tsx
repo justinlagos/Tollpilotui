@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useTheme, AppHeader, Btn, Icon, Card, MiniMap, SectionLabel } from '../tp';
 import { Pilot } from '../Pilot';
@@ -6,6 +7,7 @@ export function TripDetailScreen() {
   const navigate = useNavigate();
   const { t, theme } = useTheme();
   const { id } = useParams();
+  const [tripType, setTripType] = useState<'business' | 'personal'>('business');
 
   const trip = {
     id: Number(id),
@@ -41,7 +43,7 @@ export function TripDetailScreen() {
         {/* Pilot hero — celebrates if money was saved */}
         {trip.saved > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, marginTop: 4 }}>
-            <Pilot size={140} mode="calm" trigger="trip_end_saved" showScene={false} />
+            <Pilot size={96} mode="calm" trigger="trip_end_saved" showScene={false} />
             <div style={{ fontSize: 13, fontWeight: 700, color: t.success, letterSpacing: '0.04em' }}>
               YOU SAVED £{trip.saved.toFixed(2)}
             </div>
@@ -86,6 +88,30 @@ export function TripDetailScreen() {
             </div>
           ))}
         </div>
+
+        {/* Mileage classification */}
+        <SectionLabel t={t}>Mileage classification</SectionLabel>
+        <Card t={t} style={{ padding: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: t.textPri }}>{trip.dist} logged</div>
+              <div style={{ fontSize: 12, color: t.textSec, marginTop: 2 }}>
+                {tripType === 'business' ? `Claimable: £${(8.2 * 0.45).toFixed(2)} at 45p/mi` : 'Personal — not claimable'}
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 4 }}>
+              {(['business', 'personal'] as const).map(ty => (
+                <button key={ty} onClick={() => setTripType(ty)} style={{
+                  padding: '6px 12px', borderRadius: 10,
+                  background: tripType === ty ? t.primary : t.cardHi,
+                  color: tripType === ty ? '#fff' : t.textSec,
+                  border: 'none', fontSize: 11, fontWeight: 700, cursor: 'pointer',
+                  fontFamily: 'inherit', textTransform: 'capitalize',
+                }}>{ty}</button>
+              ))}
+            </div>
+          </div>
+        </Card>
 
         {/* Zones avoided */}
         <SectionLabel t={t}>Zones avoided</SectionLabel>

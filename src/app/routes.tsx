@@ -19,6 +19,11 @@ import { AddVehicleScreen } from './components/screens/AddVehicleScreen';
 import { NotificationsScreen } from './components/screens/NotificationsScreen';
 import { FleetScreen } from './components/screens/FleetScreen';
 import { PilotDemoScreen } from './components/screens/PilotDemoScreen';
+import { PCNDefenceScreen, PCNDetailScreen } from './components/screens/PCNDefenceScreen';
+import { MileageScreen } from './components/screens/MileageScreen';
+import { TollScoreScreen } from './components/screens/TollScoreScreen';
+import { DailyCommuteScreen } from './components/screens/DailyCommuteScreen';
+import { ParkingScreen } from './components/screens/ParkingScreen';
 import {
   SettingsScreen, ProfileScreen, AlertSettingsScreen, HelpCentreScreen, AboutScreen
 } from './components/screens/SettingsAndMoreScreens';
@@ -61,4 +66,10 @@ export const router = createBrowserRouter([
   { path: '/payment', Component: PaymentConfirmationScreen },
   { path: '/referral', Component: ReferralScreen },
   { path: '/pilot-demo', Component: PilotDemoScreen },
+  { path: '/pcn', Component: PCNDefenceScreen },
+  { path: '/pcn/:id', Component: PCNDetailScreen },
+  { path: '/mileage', Component: MileageScreen },
+  { path: '/tollscore', Component: TollScoreScreen },
+  { path: '/daily-commute', Component: DailyCommuteScreen },
+  { path: '/parking', Component: ParkingScreen },
 ]);

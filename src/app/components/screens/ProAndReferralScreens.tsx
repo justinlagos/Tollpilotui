@@ -11,6 +11,8 @@ export function ProUpgradeScreen() {
   const [plan, setPlan] = useState<'monthly' | 'annual'>('annual');
 
   const features = [
+    { icon: 'route', color: '#FDC500', title: 'Mileage logging', sub: 'Auto-track business vs personal, HMRC-ready export' },
+    { icon: 'shield', color: '#3BA9FF', title: 'PCN Defence', sub: 'Evidence logging + one-tap TfL charge appeals' },
     { icon: 'team', color: '#3BA9FF', title: 'Fleet management', sub: 'Track up to 20 drivers and vehicles' },
     { icon: 'bell', color: '#F59E0B', title: 'Predictive alerts', sub: 'AI-powered zone warnings 5 min early' },
     { icon: 'map', color: '#22C55E', title: 'Real-time traffic overlay', sub: 'Avoid congestion before it forms' },
@@ -303,6 +305,22 @@ export function ZoneEnteredScreen() {
           <Icon n="creditCard" s={18} c="#fff" />
           Pay £12.50 now
         </Btn>
+
+        {/* PCN Defence hook */}
+        <div onClick={() => navigate('/pcn')} style={{
+          background: `${t.primary}12`, border: `1px solid ${t.primary}30`, borderRadius: 16,
+          padding: 14, display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer',
+        }}>
+          <div style={{ width: 36, height: 36, borderRadius: 11, background: `${t.primary}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Icon n="shield" s={18} c={t.primary} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: t.textPri }}>Think this charge is wrong?</div>
+            <div style={{ fontSize: 12, color: t.textSec }}>We've logged the evidence. Appeal in one tap.</div>
+          </div>
+          <Icon n="right" s={16} c={t.textTer} />
+        </div>
+
         <Btn t={t} v="secondary" onClick={() => navigate('/dashboard')}>Dismiss — I'll pay later</Btn>
       </div>
     </div>

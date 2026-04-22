@@ -173,7 +173,7 @@ export function AlertSettingsScreen() {
   const { t } = useTheme();
   const [settings, setSettings] = useState({
     ulezApproach: true, congestion: true, toll: true, mot: true, summary: false,
-    pushNotif: true, emailSummary: false, distThreshold: '800m',
+    pushNotif: true, emailSummary: false, distThreshold: '800m', dailyCommute: true,
   });
 
   const toggle = (key: keyof typeof settings) => setSettings(s => ({ ...s, [key]: !s[key] }));
@@ -222,6 +222,7 @@ export function AlertSettingsScreen() {
         <SectionLabel t={t}>Notifications</SectionLabel>
         <Card t={t} pad={0}>
           {[
+            { key: 'dailyCommute', label: 'Daily Commute', sub: 'Morning charge forecast at departure', icon: 'zap', color: t.accent },
             { key: 'mot', label: 'MOT reminders', sub: '30, 14, 7 days before expiry', icon: 'clock', color: t.warn },
             { key: 'summary', label: 'Weekly summary', sub: 'How much you saved this week', icon: 'trending', color: t.success },
             { key: 'pushNotif', label: 'Push notifications', sub: 'Real-time zone alerts', icon: 'bell', color: t.primary },

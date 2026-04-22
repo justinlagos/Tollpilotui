@@ -71,14 +71,12 @@ export function DashboardScreen() {
             <div style={{ fontSize: 11, fontWeight: 700, color: t.textTer, letterSpacing: '0.08em' }}>YOUR VEHICLE</div>
             <Icon n="right" s={18} c={t.textTer} />
           </div>
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
             <Pilot
-              size={140}
+              size={72}
               mode={motState === 'expired' || motState === 'due' ? 'alert' : 'calm'}
               showScene={false}
             />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
             <UKPlate value="DS18JRX" size="sm" />
           </div>
           <div style={{ fontSize: 14, color: t.textSec, textAlign: 'center' }}>VW Golf · 2018 · Petrol · Euro 6</div>
@@ -101,8 +99,8 @@ export function DashboardScreen() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
           {[
             { icon: 'nav', label: 'Start Drive', color: t.primary, path: '/drive' },
-            { icon: 'route', label: 'Check a Route', color: t.accent, path: '/route' },
-            { icon: 'mapPin', label: 'Explore Charges', color: t.success, path: '/zones' },
+            { icon: 'route', label: 'Check Route', color: t.accent, path: '/route' },
+            { icon: 'mapPin', label: 'Parking', color: t.success, path: '/parking' },
           ].map(a => (
             <button key={a.label} onClick={() => navigate(a.path)} style={{
               background: t.card, borderRadius: 20, padding: '18px 0', display: 'flex',
@@ -115,6 +113,61 @@ export function DashboardScreen() {
               <span style={{ fontSize: 13, fontWeight: 600, color: t.textPri }}>{a.label}</span>
             </button>
           ))}
+        </div>
+
+        {/* TollScore card */}
+        <Card t={t} onClick={() => navigate('/tollscore')} style={{ cursor: 'pointer' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>
+              <svg width="52" height="52" viewBox="0 0 52 52">
+                <circle cx="26" cy="26" r="22" fill="none" stroke={t.cardHi} strokeWidth="5" />
+                <circle cx="26" cy="26" r="22" fill="none" stroke={t.primary} strokeWidth="5"
+                  strokeDasharray={`${(742 / 1000) * 138} 138`}
+                  strokeLinecap="round"
+                  transform="rotate(-90 26 26)"
+                />
+              </svg>
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <span style={{ fontSize: 14, fontWeight: 900, color: t.textPri }}>742</span>
+              </div>
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: t.primary, letterSpacing: '0.08em' }}>TOLLSCORE</div>
+              <div style={{ fontSize: 16, fontWeight: 800, color: t.textPri }}>Optimised</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 2 }}>
+                <Icon n="trending" s={12} c={t.success} />
+                <span style={{ fontSize: 12, fontWeight: 600, color: t.success }}>+24 this week</span>
+              </div>
+            </div>
+            <Icon n="right" s={18} c={t.textTer} />
+          </div>
+        </Card>
+
+        {/* Daily Commute briefing */}
+        <Card t={t} onClick={() => navigate('/daily-commute')} style={{ cursor: 'pointer' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <IconBadge icon="bell" color={t.accent} size={42} />
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: t.accent, letterSpacing: '0.08em' }}>MORNING BRIEFING</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: t.textPri }}>Your route today: <span style={{ color: t.danger }}>£12.50</span> in charges</div>
+              <div style={{ fontSize: 12, color: t.textSec }}>Cheapest alternative: £0, +6 min</div>
+            </div>
+            <Icon n="right" s={18} c={t.textTer} />
+          </div>
+        </Card>
+
+        {/* Feature row: PCN Defence + Mileage */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <Card t={t} onClick={() => navigate('/pcn')} style={{ cursor: 'pointer', padding: 14 }}>
+            <IconBadge icon="shield" color={t.primary} size={36} />
+            <div style={{ fontSize: 13, fontWeight: 700, color: t.textPri, marginTop: 10 }}>PCN Defence</div>
+            <div style={{ fontSize: 11, color: t.textSec, marginTop: 2 }}>3 cases · £40 saved</div>
+          </Card>
+          <Card t={t} onClick={() => navigate('/mileage')} style={{ cursor: 'pointer', padding: 14 }}>
+            <IconBadge icon="route" color={t.accent} size={36} />
+            <div style={{ fontSize: 13, fontWeight: 700, color: t.textPri, marginTop: 10 }}>Mileage log</div>
+            <div style={{ fontSize: 11, color: t.textSec, marginTop: 2 }}>37.1 mi this month</div>
+          </Card>
         </div>
 
         {/* Savings card */}

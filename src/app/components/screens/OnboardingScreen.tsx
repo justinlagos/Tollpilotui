@@ -29,49 +29,49 @@ const SLIDES = [
 ];
 
 const SLIDE_VARIANTS = {
-  enter: (dir: number) => ({
-    x: dir > 0 ? '100%' : '-100%',
+  enter: (_dir: number) => ({
     opacity: 0,
-    scale: 0.96,
+    scale: 0.94,
+    y: 12,
   }),
   center: {
-    x: 0,
     opacity: 1,
     scale: 1,
+    y: 0,
     transition: {
-      x: { type: 'spring', stiffness: 320, damping: 30 },
-      opacity: { duration: 0.25, ease: 'easeOut' },
-      scale: { duration: 0.3, ease: 'easeOut' },
+      opacity: { duration: 0.35, ease: 'easeOut' },
+      scale: { duration: 0.35, ease: 'easeOut' },
+      y: { duration: 0.4, ease: 'easeOut' },
     },
   },
-  exit: (dir: number) => ({
-    x: dir > 0 ? '-100%' : '100%',
+  exit: (_dir: number) => ({
     opacity: 0,
     scale: 0.96,
+    y: -8,
     transition: {
-      x: { type: 'spring', stiffness: 320, damping: 30 },
       opacity: { duration: 0.2, ease: 'easeIn' },
       scale: { duration: 0.2 },
+      y: { duration: 0.2 },
     },
   }),
 };
 
 const TEXT_VARIANTS = {
-  enter: (dir: number) => ({
-    x: dir > 0 ? 40 : -40,
+  enter: (_dir: number) => ({
     opacity: 0,
+    y: 10,
   }),
   center: {
-    x: 0,
     opacity: 1,
+    y: 0,
     transition: {
-      x: { type: 'spring', stiffness: 280, damping: 28, delay: 0.08 },
-      opacity: { duration: 0.3, ease: 'easeOut', delay: 0.08 },
+      opacity: { duration: 0.3, ease: 'easeOut', delay: 0.1 },
+      y: { duration: 0.35, ease: 'easeOut', delay: 0.1 },
     },
   },
-  exit: (dir: number) => ({
-    x: dir > 0 ? -30 : 30,
+  exit: (_dir: number) => ({
     opacity: 0,
+    y: -6,
     transition: { duration: 0.18, ease: 'easeIn' },
   }),
 };
@@ -241,7 +241,7 @@ export function OnboardingScreen() {
               {slide === 2 && (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
                   {/* Pilot — hero character, plays plate_verified trigger */}
-                  <Pilot size={260} mode="calm" trigger="plate_verified" />
+                  <Pilot size={140} mode="calm" trigger="plate_verified" showScene={false} />
 
                   {/* Status chips — stagger in after car */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, width: '100%' }}>
