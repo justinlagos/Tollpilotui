@@ -1,0 +1,64 @@
+import { createBrowserRouter } from 'react-router';
+import { SplashScreen } from './components/screens/SplashScreen';
+import { AuthScreen } from './components/screens/AuthScreen';
+import { OnboardingScreen } from './components/screens/OnboardingScreen';
+import { VehicleLookupScreen } from './components/screens/VehicleLookupScreen';
+import { LocationPermissionScreen, NotificationPermissionScreen, OnboardingSuccessScreen } from './components/screens/PermissionScreens';
+import { DashboardScreen } from './components/screens/DashboardScreen';
+import { RouteInputScreen } from './components/screens/RouteInputScreen';
+import { CompareRoutesScreen } from './components/screens/CompareRoutesScreen';
+import { DriveScreen } from './components/screens/DriveScreen';
+import { ZonesScreen } from './components/screens/ZonesScreen';
+import { ZoneDetailScreen } from './components/screens/ZoneDetailScreen';
+import { TripHistoryScreen } from './components/screens/TripHistoryScreen';
+import { TripDetailScreen } from './components/screens/TripDetailScreen';
+import { SavingsScreen } from './components/screens/SavingsScreen';
+import { VehicleDetailsScreen } from './components/screens/VehicleDetailsScreen';
+import { BookMOTScreen } from './components/screens/BookMOTScreen';
+import { AddVehicleScreen } from './components/screens/AddVehicleScreen';
+import { NotificationsScreen } from './components/screens/NotificationsScreen';
+import { FleetScreen } from './components/screens/FleetScreen';
+import { PilotDemoScreen } from './components/screens/PilotDemoScreen';
+import {
+  SettingsScreen, ProfileScreen, AlertSettingsScreen, HelpCentreScreen, AboutScreen
+} from './components/screens/SettingsAndMoreScreens';
+import {
+  ProUpgradeScreen, ReferralScreen, PaymentConfirmationScreen, ZoneEnteredScreen,
+  FleetDriverDetailScreen, RouteCostByDriverScreen
+} from './components/screens/ProAndReferralScreens';
+
+export const router = createBrowserRouter([
+  { path: '/', Component: SplashScreen },
+  { path: '/auth', Component: AuthScreen },
+  { path: '/onboarding', Component: OnboardingScreen },
+  { path: '/lookup', Component: VehicleLookupScreen },
+  { path: '/permission/location', Component: LocationPermissionScreen },
+  { path: '/permission/notifications', Component: NotificationPermissionScreen },
+  { path: '/onboarding/success', Component: OnboardingSuccessScreen },
+  { path: '/dashboard', Component: DashboardScreen },
+  { path: '/route', Component: RouteInputScreen },
+  { path: '/compare', Component: CompareRoutesScreen },
+  { path: '/drive', Component: DriveScreen },
+  { path: '/zones', Component: ZonesScreen },
+  { path: '/zones/:id', Component: ZoneDetailScreen },
+  { path: '/zone-entered', Component: ZoneEnteredScreen },
+  { path: '/trips', Component: TripHistoryScreen },
+  { path: '/trips/:id', Component: TripDetailScreen },
+  { path: '/savings', Component: SavingsScreen },
+  { path: '/vehicle', Component: VehicleDetailsScreen },
+  { path: '/vehicle/add', Component: AddVehicleScreen },
+  { path: '/book-mot', Component: BookMOTScreen },
+  { path: '/notifications', Component: NotificationsScreen },
+  { path: '/fleet', Component: FleetScreen },
+  { path: '/fleet/routes', Component: RouteCostByDriverScreen },
+  { path: '/fleet/:id', Component: FleetDriverDetailScreen },
+  { path: '/settings', Component: SettingsScreen },
+  { path: '/profile', Component: ProfileScreen },
+  { path: '/alerts', Component: AlertSettingsScreen },
+  { path: '/pro', Component: ProUpgradeScreen },
+  { path: '/help', Component: HelpCentreScreen },
+  { path: '/about', Component: AboutScreen },
+  { path: '/payment', Component: PaymentConfirmationScreen },
+  { path: '/referral', Component: ReferralScreen },
+  { path: '/pilot-demo', Component: PilotDemoScreen },
+]);
