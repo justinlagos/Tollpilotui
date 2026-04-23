@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useTheme, AppHeader, Btn, Icon, UKPlate, CarLoop } from '../tp';
+import { useTheme, AppHeader, Btn, Icon, UKPlate } from '../tp';
+import { Pilot } from '../Pilot';
+import { PilotFX } from '../PilotFX';
 
 type LookupState = 'input' | 'loading' | 'found' | 'not_found';
 
@@ -25,7 +27,10 @@ export function AddVehicleScreen() {
       <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 24, paddingBottom: 40 }}>
         {state === 'loading' && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24, paddingTop: 60 }}>
-            <CarLoop color="#2563EB" />
+            <div style={{ position: 'relative', width: 140, height: 140, display: 'inline-block' }}>
+              <PilotFX emotion="thinking" size={140} />
+              <Pilot size={140} emotion="thinking" showScene={false} />
+            </div>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 20, fontWeight: 800, color: t.textPri, marginBottom: 8 }}>Looking up {plate}…</div>
               <div style={{ fontSize: 14, color: t.textSec }}>Checking DVLA records</div>
