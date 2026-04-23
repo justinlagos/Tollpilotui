@@ -141,7 +141,7 @@ export function AuthScreen() {
             <InputField label="Password" type="password" value={password} onChange={setPassword} icon="lock" t={t} placeholder={mode === 'signup' ? 'Min. 8 characters' : 'Your password'} />
 
             {mode === 'signin' && (
-              <button onClick={() => setMode('reset')} style={{
+              <button onClick={() => navigate('/auth/forgot')} style={{
                 background: 'none', border: 'none', color: t.primary, fontSize: 13, fontWeight: 600,
                 cursor: 'pointer', textAlign: 'right', fontFamily: 'inherit'
               }}>Forgot password?</button>

@@ -3,27 +3,28 @@ import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme, Logo, Btn, Icon } from '../tp';
 import { Pilot } from '../Pilot';
+import { PilotFX } from '../PilotFX';
 
 const SLIDES = [
   {
     icon: 'zap',
     color: '#3BA9FF',
-    title: 'Stop paying charges you didn\'t plan for',
-    body: 'ULEZ, tolls, airport fees. They add up quietly.\nWe surface them before they cost you.',
+    title: 'Know the cost before you drive',
+    body: 'See charges on your route before they hit.\nAvoid ULEZ, tolls, and hidden fees in seconds.',
     visual: 'route',
   },
   {
     icon: 'bell',
     color: '#FDC500',
-    title: 'See the real cost of every route',
-    body: 'Not just time.\nEvery route shows what you\'ll pay, what you\'ll avoid, and what it saves you.',
+    title: 'Get warned before it costs you',
+    body: 'We alert you early, before charges happen.\nReroute or continue, your call.',
     visual: 'alert',
   },
   {
     icon: 'shield',
     color: '#3BA9FF',
-    title: "You're covered.",
-    body: "We've verified your vehicle.\nYou'll know before any charge hits.",
+    title: 'We track your vehicle for you',
+    body: 'MOT, tax, and compliance checked automatically.\nNo surprises. No missed deadlines.',
     visual: 'car',
   },
 ];
@@ -241,7 +242,7 @@ export function OnboardingScreen() {
               {slide === 2 && (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 }}>
                   {/* Pilot — hero character, plays plate_verified trigger */}
-                  <Pilot size={140} mode="calm" trigger="plate_verified" showScene={false} />
+                  <div style={{ position: "relative", width: 140, height: 140, display: "inline-block" }}><PilotFX emotion="confident" size={140} /><Pilot size={140} emotion="confident" trigger="plate_verified"  showScene={false} /></div>
 
                   {/* Status chips — stagger in after car */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, width: '100%' }}>

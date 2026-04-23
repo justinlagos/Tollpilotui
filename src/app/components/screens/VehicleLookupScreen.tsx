@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTheme, Btn, Icon, UKPlate, Logo } from '../tp';
 import { Pilot } from '../Pilot';
+import { PilotFX } from '../PilotFX';
 
 type LookupState = 'input' | 'loading' | 'success' | 'error';
 const VALID_PLATES = ['DS18JRX', 'AB12CDE', 'LK23ABC'];
@@ -31,7 +32,7 @@ export function VehicleLookupScreen() {
     return (
       <div style={{ minHeight: '100dvh', background: t.bg, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 28, padding: '0 24px' }}>
         <div style={{ width: '100%', maxWidth: 340, display: 'flex', justifyContent: 'center' }}>
-          <Pilot size={120} mode="speed" showScene={false} />
+          <div style={{ position: "relative", width: 120, height: 120, display: "inline-block" }}><PilotFX emotion="thinking" size={120} /><Pilot size={120} emotion="thinking"  showScene={false} /></div>
         </div>
         <div style={{ width: '100%', maxWidth: 280, height: 2, background: t.cardHi, borderRadius: 999, overflow: 'hidden', position: 'relative' }}>
           <motion.div
@@ -54,7 +55,7 @@ export function VehicleLookupScreen() {
     return (
       <div style={{ minHeight: '100dvh', background: t.bg, display: 'flex', flexDirection: 'column', padding: '48px 24px 40px', gap: 24 }}>
         <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-          <Pilot size={120} mode="calm" trigger="plate_verified" showScene={false} />
+          <div style={{ position: "relative", width: 120, height: 120, display: "inline-block" }}><PilotFX emotion="confident" size={120} /><Pilot size={120} emotion="confident" trigger="plate_verified"  showScene={false} /></div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
           <UKPlate value={plate || 'DS18JRX'} size="lg" validated />
@@ -167,10 +168,12 @@ export function VehicleLookupScreen() {
         {/* Headline */}
         <div style={{ textAlign: 'center' }}>
           <h1 style={{ fontSize: 32, fontWeight: 900, color: t.textPri, letterSpacing: '-0.03em', margin: '0 0 10px', lineHeight: 1.15 }}>
-            Which one's yours?
+            {isValid ? 'This is your vehicle' : 'Enter your registration'}
           </h1>
-          <p style={{ fontSize: 15, color: t.textSec, margin: 0, lineHeight: 1.6 }}>
-            We'll check MOT, tax and ULEZ{'\n'}compliance automatically.
+          <p style={{ fontSize: 15, color: t.textSec, margin: 0, lineHeight: 1.6, whiteSpace: 'pre-line' }}>
+            {isValid
+              ? "We'll keep it monitored automatically"
+              : "We'll instantly check your vehicle status"}
           </p>
         </div>
 
@@ -201,7 +204,7 @@ export function VehicleLookupScreen() {
               style={{ width: '100%' }}
             >
               <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-                <Pilot size={100} mode="calm" showScene={false} />
+                <div style={{ position: "relative", width: 100, height: 100, display: "inline-block" }}><PilotFX emotion={isValid ? "confident" : "thinking"} size={100} /><Pilot size={100} emotion={isValid ? "confident" : "thinking"}  showScene={false} /></div>
               </div>
             </motion.div>
           ) : (
@@ -214,10 +217,10 @@ export function VehicleLookupScreen() {
               style={{ textAlign: 'center', padding: '0 32px' }}
             >
               <div style={{ opacity: 0.2, marginBottom: 12 }}>
-                <Pilot size={64} mode="idle" showScene={false} />
+                <div style={{ position: "relative", width: 64, height: 64, display: "inline-block" }}><PilotFX emotion="curious" size={64} /><Pilot size={64} emotion="curious"  showScene={false} /></div>
               </div>
               <div style={{ fontSize: 14, color: t.textTer, lineHeight: 1.6 }}>
-                Type your registration above{'\n'}and your car will appear here
+                Type your registration above{'\n'}and we'll check it instantly
               </div>
             </motion.div>
           )}

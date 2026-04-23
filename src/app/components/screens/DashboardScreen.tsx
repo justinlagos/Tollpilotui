@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useTheme, Icon, Card, UKPlate, IconBadge, SectionLabel, BottomNav, AppHeader, Toggle, OfflineBanner } from '../tp';
+import { useTheme, Icon, Card, UKPlate, IconBadge, SectionLabel, BottomNav, Logo, OfflineBanner } from '../tp';
 import { Pilot } from '../Pilot';
+import { PilotFX } from '../PilotFX';
+import { getBaseState } from '../../lib/emotionStateMachine';
 
 const MONTHS = [
   { m: 'Nov', a: 38 }, { m: 'Dec', a: 52 }, { m: 'Jan', a: 67 },
@@ -13,24 +15,32 @@ const totalSaved = MONTHS.reduce((s, m) => s + m.a, 0);
 export function DashboardScreen() {
   const navigate = useNavigate();
   const { t, theme, toggleTheme } = useTheme();
-  const [motState] = useState<'valid' | 'due' | 'expired'>('due'); // edge state demo
+  const [motState] = useState<'valid' | 'due' | 'expired'>('due');
   const [offline] = useState(false);
 
   const motColor = motState === 'expired' ? t.danger : motState === 'due' ? t.warn : t.success;
   const motLabel = motState === 'expired' ? 'MOT EXPIRED' : motState === 'due' ? 'MOT DUE SOON' : 'MOT VALID';
   const motValue = motState === 'expired' ? 'Expired 3 days ago' : motState === 'due' ? '14 days remaining' : 'Valid until Apr 2026';
 
+  // emotion from state machine: concerned if MOT issue, otherwise confident
+  const dashboardEmotion = getBaseState('dashboard', {
+    motUrgency: motState === 'expired' ? 'expired' : motState === 'due' ? 'due' : 'none',
+  });
+
   return (
     <div style={{ minHeight: '100dvh', background: t.bg, paddingBottom: 80 }}>
       <OfflineBanner visible={offline} />
 
-      {/* Header */}
-      <div style={{ padding: '56px 20px 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div>
-          <div style={{ fontSize: 13, color: t.textTer, marginBottom: 2 }}>Good evening</div>
-          <div style={{ fontSize: 26, fontWeight: 900, color: t.textPri, letterSpacing: '-0.03em', lineHeight: 1 }}>Justin</div>
+      {/* Header — wordmark top-left ONLY (no car icon), greeting + actions top-right */}
+      <div style={{ padding: '56px 20px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <Logo s={22} theme={theme} />
+          <div>
+            <div style={{ fontSize: 13, color: t.textTer, marginBottom: 2 }}>Good evening</div>
+            <div style={{ fontSize: 26, fontWeight: 900, color: t.textPri, letterSpacing: '-0.03em', lineHeight: 1 }}>Justin</div>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
           <button onClick={toggleTheme} aria-label="Toggle theme" style={{
             width: 42, height: 42, borderRadius: 14, background: t.cardHi,
             border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center'
@@ -48,7 +58,8 @@ export function DashboardScreen() {
       </div>
 
       <div style={{ padding: '20px 20px 0', display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {/* MOT Warning Banner */}
+
+        {/* MOT Warning — kept */}
         {motState !== 'valid' && (
           <div onClick={() => navigate('/book-mot')} style={{
             background: `${motColor}18`, border: `1px solid ${motColor}44`, borderRadius: 18,
@@ -65,18 +76,17 @@ export function DashboardScreen() {
           </div>
         )}
 
-        {/* Vehicle card */}
+        {/* Vehicle card — emotion reflects MOT status */}
         <Card t={t} onClick={() => navigate('/vehicle')} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ fontSize: 11, fontWeight: 700, color: t.textTer, letterSpacing: '0.08em' }}>YOUR VEHICLE</div>
             <Icon n="right" s={18} c={t.textTer} />
           </div>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-            <Pilot
-              size={72}
-              mode={motState === 'expired' || motState === 'due' ? 'alert' : 'calm'}
-              showScene={false}
-            />
+            <div style={{ position: 'relative', width: 72, height: 72 }}>
+              <PilotFX emotion={dashboardEmotion} size={72} />
+              <Pilot size={72} emotion={dashboardEmotion} showScene={false} />
+            </div>
             <UKPlate value="DS18JRX" size="sm" />
           </div>
           <div style={{ fontSize: 14, color: t.textSec, textAlign: 'center' }}>VW Golf · 2018 · Petrol · Euro 6</div>
@@ -94,28 +104,90 @@ export function DashboardScreen() {
           </div>
         </Card>
 
-        {/* Quick actions */}
-        <SectionLabel t={t}>Quick actions</SectionLabel>
+        {/* "TODAY" intelligence card — knows your usual + the £0 alt */}
+        <Card
+          t={t}
+          onClick={() => navigate('/compare')}
+          glow={t.primary}
+          style={{ cursor: 'pointer' }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: t.primary, letterSpacing: '0.08em' }}>TODAY</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: t.textTer }}>Auto-detected · Wed, 08:12</div>
+          </div>
+          <div style={{ fontSize: 14, color: t.textSec, marginBottom: 6 }}>
+            Your usual route today costs
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 14 }}>
+            <div style={{ fontSize: 36, fontWeight: 900, color: t.danger, letterSpacing: '-0.03em', lineHeight: 1 }}>£12.50</div>
+            <div style={{ fontSize: 13, color: t.textTer }}>ULEZ + Congestion</div>
+          </div>
+          <div style={{
+            background: `${t.success}15`, borderRadius: 14, border: `1px solid ${t.success}30`,
+            padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <div style={{ width: 36, height: 36, borderRadius: 11, background: `${t.success}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon n="route" s={18} c={t.success} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, fontWeight: 800, color: t.textPri }}>£0 alternative available</div>
+              <div style={{ fontSize: 12, color: t.textSec }}>+6 mins · avoids the zone</div>
+            </div>
+            <Icon n="right" s={18} c={t.success} />
+          </div>
+        </Card>
+
+        {/* PRIMARY ACTIONS — Start Drive + Plan Route */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <button onClick={() => navigate('/drive')} style={{
+            background: t.primary, borderRadius: 20, padding: '22px 16px', border: 'none',
+            cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 10,
+            boxShadow: `0 10px 28px ${t.primary}44`, textAlign: 'left',
+          }}>
+            <div style={{ width: 42, height: 42, borderRadius: 13, background: 'rgba(255,255,255,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon n="nav" s={22} c="#FFFFFF" />
+            </div>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#FFFFFF', letterSpacing: '-0.01em' }}>Start Drive</div>
+              <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.75)' }}>Live alerts on</div>
+            </div>
+          </button>
+          <button onClick={() => navigate('/route')} style={{
+            background: t.accent, borderRadius: 20, padding: '22px 16px', border: 'none',
+            cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 10,
+            boxShadow: `0 10px 28px ${t.accent}55`, textAlign: 'left',
+          }}>
+            <div style={{ width: 42, height: 42, borderRadius: 13, background: 'rgba(10,15,28,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon n="route" s={22} c="#0A0F1C" />
+            </div>
+            <div>
+              <div style={{ fontSize: 15, fontWeight: 800, color: '#0A0F1C', letterSpacing: '-0.01em' }}>Plan Route</div>
+              <div style={{ fontSize: 12, color: 'rgba(10,15,28,0.65)' }}>Compare cost + time</div>
+            </div>
+          </button>
+        </div>
+
+        {/* SECONDARY ACTIONS — Parking · History · Wallet */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
           {[
-            { icon: 'nav', label: 'Start Drive', color: t.primary, path: '/drive' },
-            { icon: 'route', label: 'Check Route', color: t.accent, path: '/route' },
             { icon: 'mapPin', label: 'Parking', color: t.success, path: '/parking' },
+            { icon: 'history', label: 'History', color: t.textSec, path: '/trips' },
+            { icon: 'creditCard', label: 'Wallet', color: t.primary, path: '/wallet' },
           ].map(a => (
             <button key={a.label} onClick={() => navigate(a.path)} style={{
-              background: t.card, borderRadius: 20, padding: '18px 0', display: 'flex',
-              flexDirection: 'column', alignItems: 'center', gap: 10, border: `1px solid ${t.border}`,
-              cursor: 'pointer', transition: 'transform 0.15s ease'
+              background: t.card, borderRadius: 18, padding: '16px 0', display: 'flex',
+              flexDirection: 'column', alignItems: 'center', gap: 8, border: `1px solid ${t.border}`,
+              cursor: 'pointer',
             }}>
-              <div style={{ width: 46, height: 46, borderRadius: 15, background: `${a.color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <Icon n={a.icon} s={22} c={a.color} />
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: `${a.color}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon n={a.icon} s={20} c={a.color} />
               </div>
-              <span style={{ fontSize: 13, fontWeight: 600, color: t.textPri }}>{a.label}</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: t.textPri }}>{a.label}</span>
             </button>
           ))}
         </div>
 
-        {/* TollScore card */}
+        {/* TollScore */}
         <Card t={t} onClick={() => navigate('/tollscore')} style={{ cursor: 'pointer' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <div style={{ position: 'relative', width: 52, height: 52, flexShrink: 0 }}>
@@ -143,30 +215,17 @@ export function DashboardScreen() {
           </div>
         </Card>
 
-        {/* Daily Commute briefing */}
-        <Card t={t} onClick={() => navigate('/daily-commute')} style={{ cursor: 'pointer' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <IconBadge icon="bell" color={t.accent} size={42} />
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: t.accent, letterSpacing: '0.08em' }}>MORNING BRIEFING</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: t.textPri }}>Your route today: <span style={{ color: t.danger }}>£12.50</span> in charges</div>
-              <div style={{ fontSize: 12, color: t.textSec }}>Cheapest alternative: £0, +6 min</div>
-            </div>
-            <Icon n="right" s={18} c={t.textTer} />
-          </div>
-        </Card>
-
-        {/* Feature row: PCN Defence + Mileage */}
+        {/* Feature row: PCN Defence + Mileage + Widget */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <Card t={t} onClick={() => navigate('/pcn')} style={{ cursor: 'pointer', padding: 14 }}>
             <IconBadge icon="shield" color={t.primary} size={36} />
             <div style={{ fontSize: 13, fontWeight: 700, color: t.textPri, marginTop: 10 }}>PCN Defence</div>
             <div style={{ fontSize: 11, color: t.textSec, marginTop: 2 }}>3 cases · £40 saved</div>
           </Card>
-          <Card t={t} onClick={() => navigate('/mileage')} style={{ cursor: 'pointer', padding: 14 }}>
-            <IconBadge icon="route" color={t.accent} size={36} />
-            <div style={{ fontSize: 13, fontWeight: 700, color: t.textPri, marginTop: 10 }}>Mileage log</div>
-            <div style={{ fontSize: 11, color: t.textSec, marginTop: 2 }}>37.1 mi this month</div>
+          <Card t={t} onClick={() => navigate('/widget')} style={{ cursor: 'pointer', padding: 14 }}>
+            <IconBadge icon="lock" color={t.accent} size={36} />
+            <div style={{ fontSize: 13, fontWeight: 700, color: t.textPri, marginTop: 10 }}>Lock screen widget</div>
+            <div style={{ fontSize: 11, color: t.textSec, marginTop: 2 }}>Today's cost + alt</div>
           </Card>
         </div>
 
@@ -183,7 +242,6 @@ export function DashboardScreen() {
             £{totalSaved}
           </div>
           <div style={{ fontSize: 14, color: t.textSec, marginBottom: 16 }}>That's money you didn't have to spend</div>
-          {/* Sparkline */}
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 48 }}>
             {MONTHS.map((m, i) => (
               <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, height: '100%', justifyContent: 'flex-end' }}>

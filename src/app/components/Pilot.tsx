@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion } from 'motion/react';
+import type { Emotion } from '../lib/emotionStateMachine';
 
 // ═══════════════════════════════════════════════════════════════
 // PILOT — TollPilot brand character
@@ -26,6 +27,10 @@ export type PilotTrigger =
 
 interface PilotProps {
   mode?: PilotMode;
+  /** Expressive emotion from the state machine. Overrides `mode` when set.
+   *  Maps onto the locked character by animating only eyes, brows, mouth,
+   *  and body micro-motion — no paths are redrawn. */
+  emotion?: Emotion;
   size?: number;
   trigger?: PilotTrigger | null;
   onTriggerComplete?: () => void;
@@ -35,6 +40,98 @@ interface PilotProps {
   showScene?: boolean;
   background?: string;
 }
+
+// ═══════════════════════════════════════════════════════════════
+// EMOTION → VISUAL MODE
+// Groups all 16 emotions onto the 5 existing scene/halo buckets
+// without altering any locked path.
+// ═══════════════════════════════════════════════════════════════
+const emotionToMode: Record<Emotion, PilotMode> = {
+  idle: 'idle',
+  sleepy: 'idle',
+  confident: 'calm',
+  happy: 'calm',
+  curious: 'calm',
+  thinking: 'calm',
+  focused: 'calm',
+  relieved: 'calm',
+  smug: 'calm',
+  proud: 'calm',
+  concerned: 'calm',
+  annoyed: 'calm',
+  alert: 'alert',
+  shocked: 'alert',
+  panicked: 'alert',
+  celebrating: 'celebrate',
+};
+
+// mouth shape per emotion
+const mouthForEmotion: Record<Emotion, 'neutral' | 'shock' | 'happy' | 'flat' | 'soft'> = {
+  idle: 'neutral',
+  confident: 'neutral',
+  happy: 'happy',
+  celebrating: 'happy',
+  proud: 'neutral',
+  smug: 'neutral',
+  relieved: 'soft',
+  curious: 'neutral',
+  thinking: 'flat',
+  focused: 'flat',
+  concerned: 'flat',
+  annoyed: 'flat',
+  alert: 'shock',
+  shocked: 'shock',
+  panicked: 'shock',
+  sleepy: 'soft',
+};
+
+// per-emotion brow + eye overrides (applied on top of mode variants)
+// values are deltas, NOT replacements — no path is redrawn.
+interface EmotionVisuals {
+  browL: { y: number; rotate: number };
+  browR: { y: number; rotate: number };
+  iris:  { scale: number };
+  pupil: { x: number; y: number; scale: number };
+  body:  { rotate?: number; scale?: number };
+  eyelidOpen: number; // 0 = closed, 1 = fully open (used for sleepy/concerned narrowing)
+}
+
+export const EMOTION_VISUALS: Record<Emotion, EmotionVisuals> = {
+  // Passive / observant — almost still, tiny neutral drift.
+  idle:        { browL: { y: 0,   rotate: 0  }, browR: { y: 0,   rotate: 0  }, iris: { scale: 1 },    pupil: { x: 0, y: 0,  scale: 1    }, body: {},                  eyelidOpen: 1    },
+  // Confident — stable posture, firm brow lift, composed.
+  confident:   { browL: { y: 1,   rotate: 3  }, browR: { y: 1,   rotate: -3 }, iris: { scale: 1 },    pupil: { x: 0, y: 0,  scale: 1    }, body: {},                  eyelidOpen: 0.98 },
+  // Happy — brighter eyes, subtle brow lift, wider iris.
+  happy:       { browL: { y: -2,  rotate: -4 }, browR: { y: -2,  rotate: 4  }, iris: { scale: 1.06 }, pupil: { x: 0, y: 0,  scale: 1.05 }, body: {},                  eyelidOpen: 1    },
+  // Proud — calm smile, slightly lowered confident brows, held stillness.
+  proud:       { browL: { y: 3,   rotate: -2 }, browR: { y: 3,   rotate: 2  }, iris: { scale: 1 },    pupil: { x: 0, y: -0.5, scale: 1  }, body: { scale: 1.01 },     eyelidOpen: 0.95 },
+  // Smug — asymmetric brow/smile, pupil shift, body angled.
+  smug:        { browL: { y: 0,   rotate: -10 }, browR: { y: -4,  rotate: 8 }, iris: { scale: 1 },    pupil: { x: 3, y: -0.5,  scale: 1 }, body: { rotate: -1.2 },    eyelidOpen: 0.86 },
+  // Relieved — exhale settle, softer eyelids, released brows.
+  relieved:    { browL: { y: 3,   rotate: -1 }, browR: { y: 3,   rotate: 1  }, iris: { scale: 0.96 }, pupil: { x: 0, y: 0.5, scale: 1   }, body: {},                  eyelidOpen: 0.82 },
+  // Curious — brows lift non-symmetrically, pupils up-forward.
+  curious:     { browL: { y: -5,  rotate: -6 }, browR: { y: -3,  rotate: 3  }, iris: { scale: 1.06 }, pupil: { x: 0, y: -1, scale: 1.04 }, body: { rotate: -1.2 },    eyelidOpen: 1.04 },
+  // Thinking — asymmetric brow, one pupil offset, analytical look.
+  thinking:    { browL: { y: -3,  rotate: -12 }, browR: { y: 2,   rotate: 4  }, iris: { scale: 0.97 }, pupil: { x: -3, y: -1, scale: 0.95 }, body: { rotate: -0.8 },  eyelidOpen: 0.96 },
+  // Focused — narrowed eyes, lowered firm brows, planted.
+  focused:     { browL: { y: 2,   rotate: -8 }, browR: { y: 2,   rotate: 8  }, iris: { scale: 0.92 }, pupil: { x: 0, y: 0,  scale: 0.92 }, body: {},                  eyelidOpen: 0.76 },
+  // Concerned — brows tilt inward-up, eyes taller, flattened smile.
+  concerned:   { browL: { y: -6,  rotate: 14 }, browR: { y: -6,  rotate: -14 }, iris: { scale: 1.02 }, pupil: { x: 0, y: 0.6, scale: 0.98 }, body: {},                eyelidOpen: 1.02 },
+  // Annoyed — half-lidded, brow dip, slight off-axis posture.
+  annoyed:     { browL: { y: 5,   rotate: 10 }, browR: { y: 5,   rotate: -10 }, iris: { scale: 0.94 }, pupil: { x: 0, y: 1, scale: 0.94 }, body: { rotate: -1 },     eyelidOpen: 0.68 },
+  // Alert — wider eyes, suppressed blink, sharp brow.
+  alert:       { browL: { y: -14, rotate: -6 }, browR: { y: -14, rotate: 6  }, iris: { scale: 0.75 }, pupil: { x: 0, y: 0,  scale: 0.8  }, body: {},                  eyelidOpen: 1.12 },
+  // Shocked — snap-open eyes, contracted pupils, immediate freeze.
+  shocked:     { browL: { y: -20, rotate: -3 }, browR: { y: -20, rotate: 3  }, iris: { scale: 0.62 }, pupil: { x: 0, y: 0,  scale: 0.6  }, body: {},                  eyelidOpen: 1.2  },
+  // Panicked — unstable wide eyes, brow tension, asymmetric.
+  panicked:    { browL: { y: -18, rotate: -16 }, browR: { y: -18, rotate: 16 }, iris: { scale: 0.7 }, pupil: { x: 0, y: 0.3, scale: 0.7 }, body: {},                  eyelidOpen: 1.14 },
+  // Celebrating — open joyful eyes, raised brows, wider iris.
+  celebrating: { browL: { y: -6,  rotate: -5 }, browR: { y: -6,  rotate: 5  }, iris: { scale: 1.1 },  pupil: { x: 0, y: 0,  scale: 1.12 }, body: {},                  eyelidOpen: 1.04 },
+  // Suspicious — half-lidded, brows firm, eyes slightly off-axis.
+  suspicious:  { browL: { y: 3,   rotate: 4  }, browR: { y: 3,   rotate: -4 }, iris: { scale: 0.95 }, pupil: { x: -2, y: -1, scale: 0.94 }, body: { rotate: -0.6 },  eyelidOpen: 0.72 },
+  // Sleepy — half-lidded, low pupil energy.
+  sleepy:      { browL: { y: 3,   rotate: 0  }, browR: { y: 3,   rotate: 0  }, iris: { scale: 0.88 }, pupil: { x: 0, y: 1,  scale: 0.88 }, body: {},                  eyelidOpen: 0.4  },
+};
 
 // Pilot is a fixed-color brand identity — NOT theme-reactive.
 const C = {
@@ -55,44 +152,61 @@ const C = {
   glowSpeed: '#3BA9FF',
 };
 
+// Root-level motion buckets. Refined: subtler float amplitudes, tension-based
+// alert motion (not shake), single-shot celebrate lift (not repeating bounce).
 const rootVariants = {
-  calm: { y: [0, -8, 0], x: 0, transition: { y: { duration: 4, repeat: Infinity, ease: 'easeInOut' }, x: { duration: 0 } } },
-  alert: {
-    x: [0, -1.5, 1.5, -1, 0],
-    y: [0, -1, 0, -1.5, 0],
-    transition: {
-      x: { duration: 0.25, repeat: Infinity, ease: 'linear' },
-      y: { duration: 0.25, repeat: Infinity, ease: 'linear' },
-    },
-  },
-  celebrate: {
-    y: [0, -28, 6, -10, 2, 0],
+  // Base calm: gentle asymmetrical breath, ~3px at 4.6s. Was [0,-8,0] @ 4s.
+  calm: {
+    y: [0, -2.4, -0.4, -2.8, 0],
     x: 0,
     transition: {
-      y: {
-        duration: 0.8,
-        repeat: Infinity,
-        times: [0, 0.2, 0.425, 0.675, 0.9, 1],
-        ease: ['easeOut', 'easeIn', 'easeOut', 'easeIn', 'easeOut'],
-      },
+      y: { duration: 4.6, repeat: Infinity, ease: 'easeInOut', times: [0, 0.28, 0.5, 0.76, 1] },
       x: { duration: 0 },
     },
   },
-  speed: {
-    y: [0, -1.5, 0, -1, 0],
+  // Alert: slow tense breath, no shake. Tension is in the face, not the body.
+  alert: {
     x: 0,
-    transition: { y: { duration: 0.5, repeat: Infinity, ease: 'linear' }, x: { duration: 0 } },
+    y: [0, -1, -0.4, 0],
+    transition: {
+      y: { duration: 1.8, repeat: Infinity, ease: 'easeInOut' },
+      x: { duration: 0 },
+    },
   },
-  idle: { y: [0, -6, 0], x: 0, transition: { y: { duration: 4.5, repeat: Infinity, ease: 'easeInOut' }, x: { duration: 0 } } },
+  // Celebrate: one controlled lift on entry, then hold. Not a repeating bounce.
+  celebrate: {
+    y: [0, -10, -3, -4, 0],
+    x: 0,
+    transition: {
+      y: { duration: 1.3, times: [0, 0.28, 0.6, 0.82, 1], ease: 'easeOut' },
+      x: { duration: 0 },
+    },
+  },
+  // Speed: planted with a micro forward/back sway. Drive streaks carry the rest.
+  speed: {
+    y: [0, -0.8, 0, -1, 0],
+    x: 0,
+    transition: { y: { duration: 0.9, repeat: Infinity, ease: 'easeInOut' }, x: { duration: 0 } },
+  },
+  // Idle: almost still, long slow breath.
+  idle: {
+    y: [0, -1.8, 0],
+    x: 0,
+    transition: {
+      y: { duration: 5.2, repeat: Infinity, ease: 'easeInOut' },
+      x: { duration: 0 },
+    },
+  },
 };
 
 const bodyVariants = {
-  calm: { scaleX: 1, scaleY: 1, transition: { duration: 0.4 } },
-  alert: { scaleX: 1, scaleY: 1, transition: { duration: 0.3 } },
+  calm: { scaleX: 1, scaleY: 1, transition: { duration: 0.5, ease: 'easeOut' } },
+  alert: { scaleX: 1, scaleY: 1, transition: { duration: 0.3, ease: 'easeOut' } },
+  // Celebrate squash/stretch — single controlled pass, NOT repeating.
   celebrate: {
-    scaleX: [1, 0.92, 1.12, 0.96, 1.04, 1],
-    scaleY: [1, 1.12, 0.9, 1.06, 0.96, 1],
-    transition: { duration: 0.8, repeat: Infinity, times: [0, 0.2, 0.425, 0.675, 0.9, 1] },
+    scaleX: [1, 0.96, 1.05, 1],
+    scaleY: [1, 1.05, 0.96, 1],
+    transition: { duration: 1.2, times: [0, 0.35, 0.7, 1], ease: 'easeOut' },
   },
   speed: { scaleX: 1, scaleY: 1, transition: { duration: 0.5 } },
   idle: { scaleX: 1, scaleY: 1, transition: { duration: 0.4 } },
@@ -140,7 +254,8 @@ const glowColorForMode = (m: PilotMode) =>
 
 // ═══════════════════════════════════════════════════════════════
 export function Pilot({
-  mode = 'calm',
+  mode: modeProp = 'calm',
+  emotion,
   size = 200,
   trigger = null,
   onTriggerComplete,
@@ -148,6 +263,11 @@ export function Pilot({
   showScene = true,
   background,
 }: PilotProps) {
+  // When emotion is set, derive the underlying visual mode from it.
+  // Otherwise fall back to the mode prop (backwards-compat).
+  const mode: PilotMode = emotion ? emotionToMode[emotion] : modeProp;
+  const visuals: EmotionVisuals = emotion ? EMOTION_VISUALS[emotion] : EMOTION_VISUALS.confident;
+  const emotionMouth = emotion ? mouthForEmotion[emotion] : null;
   const [currentMode, setCurrentMode] = useState<PilotMode>(mode);
   const [mouthState, setMouthState] = useState<'neutral' | 'shock' | 'happy'>('neutral');
   const [blinking, setBlinking] = useState(false);
@@ -157,10 +277,17 @@ export function Pilot({
 
   useEffect(() => {
     setCurrentMode(mode);
-    if (mode === 'alert') setMouthState('shock');
-    else if (mode === 'celebrate') setMouthState('happy');
-    else setMouthState('neutral');
-  }, [mode]);
+    if (emotionMouth) {
+      // emotion-driven mouths map onto the three visual mouth slots
+      if (emotionMouth === 'shock') setMouthState('shock');
+      else if (emotionMouth === 'happy') setMouthState('happy');
+      else setMouthState('neutral');
+    } else {
+      if (mode === 'alert') setMouthState('shock');
+      else if (mode === 'celebrate') setMouthState('happy');
+      else setMouthState('neutral');
+    }
+  }, [mode, emotionMouth]);
 
   useEffect(() => {
     if (!trigger) return;
@@ -324,8 +451,19 @@ export function Pilot({
         height={svgH}
         viewBox="0 0 500 400"
         xmlns="http://www.w3.org/2000/svg"
-        variants={rootVariants}
-        animate={currentMode}
+        variants={emotion ? undefined : rootVariants}
+        animate={emotion
+          ? {
+              y: (visuals.body.rotate !== undefined || visuals.body.scale !== undefined)
+                ? [0, -4, 0]
+                : [0, -5, 0],
+              rotate: visuals.body.rotate ?? 0,
+              scale: visuals.body.scale ?? 1,
+            }
+          : currentMode}
+        transition={emotion
+          ? { y: { duration: 4.2, repeat: Infinity, ease: 'easeInOut' }, rotate: { duration: 0.3 }, scale: { duration: 0.3 } }
+          : undefined}
         style={{
           overflow: 'visible',
           display: 'block',
@@ -391,9 +529,21 @@ export function Pilot({
           {/* LEFT EYE */}
           <g>
             <circle cx="160" cy="250" r="65" fill="white" stroke={C.bodyStroke} strokeWidth="3" />
-            <motion.g variants={irisVariants} animate={currentMode} style={{ transformOrigin: '160px 250px' }}>
+            <motion.g
+              variants={emotion ? undefined : irisVariants}
+              animate={emotion ? { scale: visuals.iris.scale } : currentMode}
+              transition={emotion ? { duration: 0.24 } : undefined}
+              style={{ transformOrigin: '160px 250px' }}
+            >
               <circle cx="160" cy="250" r="30" fill={C.irisBrown} />
-              <motion.g variants={pupilVariants} animate={currentMode} style={{ transformOrigin: '160px 250px' }}>
+              <motion.g
+                variants={emotion ? undefined : pupilVariants}
+                animate={emotion
+                  ? { x: visuals.pupil.x, y: visuals.pupil.y, scale: visuals.pupil.scale }
+                  : currentMode}
+                transition={emotion ? { duration: 0.22 } : undefined}
+                style={{ transformOrigin: '160px 250px' }}
+              >
                 <motion.g animate={{ x: pupilDrift.x, y: pupilDrift.y }} transition={{ duration: 0.4, ease: 'easeInOut' }}>
                   <circle cx="160" cy="250" r="12" fill={C.pupilBlack} />
                   <circle cx="145" cy="235" r="5" fill={C.shine} opacity="0.8" />
@@ -405,8 +555,8 @@ export function Pilot({
               fill={C.bodyYellow}
               stroke={C.bodyStroke}
               strokeWidth="2"
-              animate={{ scaleY: blinking ? 1 : 0 }}
-              transition={{ duration: 0.08 }}
+              animate={{ scaleY: blinking ? 1 : (emotion ? 1 - visuals.eyelidOpen : 0) }}
+              transition={{ duration: blinking ? 0.08 : 0.22 }}
               style={{ transformOrigin: '160px 185px' }}
             />
           </g>
@@ -414,9 +564,21 @@ export function Pilot({
           {/* RIGHT EYE */}
           <g>
             <circle cx="340" cy="250" r="65" fill="white" stroke={C.bodyStroke} strokeWidth="3" />
-            <motion.g variants={irisVariants} animate={currentMode} style={{ transformOrigin: '340px 250px' }}>
+            <motion.g
+              variants={emotion ? undefined : irisVariants}
+              animate={emotion ? { scale: visuals.iris.scale } : currentMode}
+              transition={emotion ? { duration: 0.24 } : undefined}
+              style={{ transformOrigin: '340px 250px' }}
+            >
               <circle cx="340" cy="250" r="30" fill={C.irisBrown} />
-              <motion.g variants={pupilVariants} animate={currentMode} style={{ transformOrigin: '340px 250px' }}>
+              <motion.g
+                variants={emotion ? undefined : pupilVariants}
+                animate={emotion
+                  ? { x: visuals.pupil.x, y: visuals.pupil.y, scale: visuals.pupil.scale }
+                  : currentMode}
+                transition={emotion ? { duration: 0.22 } : undefined}
+                style={{ transformOrigin: '340px 250px' }}
+              >
                 <motion.g animate={{ x: pupilDrift.x, y: pupilDrift.y }} transition={{ duration: 0.4, ease: 'easeInOut' }}>
                   <circle cx="340" cy="250" r="12" fill={C.pupilBlack} />
                   <circle cx="325" cy="235" r="5" fill={C.shine} opacity="0.8" />
@@ -428,8 +590,8 @@ export function Pilot({
               fill={C.bodyYellow}
               stroke={C.bodyStroke}
               strokeWidth="2"
-              animate={{ scaleY: blinking ? 1 : 0 }}
-              transition={{ duration: 0.08 }}
+              animate={{ scaleY: blinking ? 1 : (emotion ? 1 - visuals.eyelidOpen : 0) }}
+              transition={{ duration: blinking ? 0.08 : 0.22 }}
               style={{ transformOrigin: '340px 185px' }}
             />
           </g>
@@ -441,8 +603,11 @@ export function Pilot({
             stroke={C.brow}
             strokeWidth="12"
             strokeLinecap="round"
-            variants={browLVariants}
-            animate={currentMode}
+            variants={emotion ? undefined : browLVariants}
+            animate={emotion
+              ? { y: visuals.browL.y, rotate: visuals.browL.rotate }
+              : currentMode}
+            transition={emotion ? { duration: 0.26, ease: 'easeOut' } : undefined}
             style={{ transformOrigin: '160px 180px' }}
           />
           <motion.path
@@ -451,8 +616,11 @@ export function Pilot({
             stroke={C.brow}
             strokeWidth="12"
             strokeLinecap="round"
-            variants={browRVariants}
-            animate={currentMode}
+            variants={emotion ? undefined : browRVariants}
+            animate={emotion
+              ? { y: visuals.browR.y, rotate: visuals.browR.rotate }
+              : currentMode}
+            transition={emotion ? { duration: 0.26, ease: 'easeOut' } : undefined}
             style={{ transformOrigin: '340px 180px' }}
           />
 

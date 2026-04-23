@@ -19,11 +19,18 @@ import { AddVehicleScreen } from './components/screens/AddVehicleScreen';
 import { NotificationsScreen } from './components/screens/NotificationsScreen';
 import { FleetScreen } from './components/screens/FleetScreen';
 import { PilotDemoScreen } from './components/screens/PilotDemoScreen';
-import { PCNDefenceScreen, PCNDetailScreen } from './components/screens/PCNDefenceScreen';
+import { PCNDefenceScreen, PCNDetailScreen, PCNNewCaseScreen } from './components/screens/PCNDefenceScreen';
 import { MileageScreen } from './components/screens/MileageScreen';
 import { TollScoreScreen } from './components/screens/TollScoreScreen';
 import { DailyCommuteScreen } from './components/screens/DailyCommuteScreen';
 import { ParkingScreen } from './components/screens/ParkingScreen';
+import {
+  ForgotPasswordScreen, ResetPasswordScreen, SupportScreen,
+  PrivacyScreen, TermsScreen, DeleteAccountScreen,
+  OfflineScreen, ErrorScreen, NotFoundScreen
+} from './components/screens/AccountAndLegalScreens';
+import { WalletScreen } from './components/screens/WalletScreen';
+import { WidgetScreen } from './components/screens/WidgetScreen';
 import {
   SettingsScreen, ProfileScreen, AlertSettingsScreen, HelpCentreScreen, AboutScreen
 } from './components/screens/SettingsAndMoreScreens';
@@ -67,9 +74,25 @@ export const router = createBrowserRouter([
   { path: '/referral', Component: ReferralScreen },
   { path: '/pilot-demo', Component: PilotDemoScreen },
   { path: '/pcn', Component: PCNDefenceScreen },
+  { path: '/pcn/new', Component: PCNNewCaseScreen },
   { path: '/pcn/:id', Component: PCNDetailScreen },
   { path: '/mileage', Component: MileageScreen },
   { path: '/tollscore', Component: TollScoreScreen },
   { path: '/daily-commute', Component: DailyCommuteScreen },
   { path: '/parking', Component: ParkingScreen },
+  { path: '/wallet', Component: WalletScreen },
+  { path: '/widget', Component: WidgetScreen },
+  // Account
+  { path: '/auth/forgot', Component: ForgotPasswordScreen },
+  { path: '/auth/reset', Component: ResetPasswordScreen },
+  { path: '/account/delete', Component: DeleteAccountScreen },
+  // Support + Legal
+  { path: '/support', Component: SupportScreen },
+  { path: '/legal/privacy', Component: PrivacyScreen },
+  { path: '/legal/terms', Component: TermsScreen },
+  // Status
+  { path: '/offline', Component: OfflineScreen },
+  { path: '/error', Component: ErrorScreen },
+  // 404 catch-all — must stay last
+  { path: '*', Component: NotFoundScreen },
 ]);

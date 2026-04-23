@@ -72,8 +72,18 @@ export function SettingsScreen() {
           <SectionLabel t={t}>Support</SectionLabel>
           <Card t={t} pad={0}>
             <RowItem icon="question" iconColor={t.primary} label="Help Centre" t={t} onPress={() => navigate('/help')} />
+            <RowItem icon="mail" iconColor={t.primary} label="Contact support" t={t} onPress={() => navigate('/support')} />
             <RowItem icon="gift" iconColor={t.success} label="Refer a friend" t={t} onPress={() => navigate('/referral')} />
             <RowItem icon="info" iconColor={t.textSec} label="About TollPilot" t={t} onPress={() => navigate('/about')} />
+          </Card>
+        </div>
+
+        {/* Legal */}
+        <div>
+          <SectionLabel t={t}>Legal</SectionLabel>
+          <Card t={t} pad={0}>
+            <RowItem icon="lock" iconColor={t.textSec} label="Privacy policy" t={t} onPress={() => navigate('/legal/privacy')} />
+            <RowItem icon="receipt" iconColor={t.textSec} label="Terms of service" t={t} onPress={() => navigate('/legal/terms')} />
           </Card>
         </div>
 
@@ -82,6 +92,7 @@ export function SettingsScreen() {
           <SectionLabel t={t}>Account</SectionLabel>
           <Card t={t} pad={0}>
             <RowItem icon="logout" label="Sign out" t={t} danger onPress={() => navigate('/auth')} />
+            <RowItem icon="close" label="Delete account" t={t} danger onPress={() => navigate('/account/delete')} />
           </Card>
         </div>
       </div>
@@ -312,7 +323,7 @@ export function HelpCentreScreen() {
               <div style={{ fontSize: 14, fontWeight: 700, color: t.textPri }}>Still stuck?</div>
               <div style={{ fontSize: 13, color: t.textSec }}>Our team replies within 24 hours</div>
             </div>
-            <Btn t={t} v="primary" size="sm" full={false} onClick={() => {}}>Contact</Btn>
+            <Btn t={t} v="primary" size="sm" full={false} onClick={() => navigate('/support')}>Contact</Btn>
           </div>
         </Card>
       </div>

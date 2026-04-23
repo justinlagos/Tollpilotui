@@ -2,10 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { useTheme, AlertSheet, Icon, MiniMap } from '../tp';
 import { Pilot, PilotMode, PilotTrigger } from '../Pilot';
+import { PilotFX } from '../PilotFX';
+import { getBaseState, emotionForEvent, Emotion } from '../../lib/emotionStateMachine';
 
 type DriveState = 'normal' | 'approaching' | 'imminent' | 'entered' | 'rerouted' | 'no_charge';
 
-// Map drive state → Pilot mode
+// Map drive state → Pilot mode (legacy fallback)
 const pilotModeFor = (ds: DriveState): PilotMode => {
   switch (ds) {
     case 'approaching':
@@ -18,6 +20,19 @@ const pilotModeFor = (ds: DriveState): PilotMode => {
     case 'normal':
     default:
       return 'speed';
+  }
+};
+
+// Map drive state → canonical emotion
+const emotionFor = (ds: DriveState): Emotion => {
+  switch (ds) {
+    case 'approaching': return emotionForEvent('approaching_zone') ?? 'concerned';
+    case 'imminent': return 'alert';
+    case 'entered': return 'shocked';
+    case 'rerouted': return emotionForEvent('reroute_success') ?? 'proud';
+    case 'no_charge': return 'relieved';
+    case 'normal':
+    default: return getBaseState('drive', {});
   }
 };
 
@@ -112,13 +127,20 @@ export function DriveScreen() {
       {/* Pilot + Speedometer row */}
       <div style={{ position: 'relative', zIndex: 10, display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 32 }}>
         {/* Pilot — no box, floats freely */}
-        <Pilot
-          size={64}
-          mode={pilotModeFor(driveState)}
-          trigger={pilotTrigger}
-          onTriggerComplete={() => setPilotTrigger(null)}
-          showScene={false}
-        />
+        <div style={{ position: 'relative', width: 64, height: 64 }}>
+          <PilotFX
+            emotion={emotionFor(driveState)}
+            size={64}
+            driving={driveState === 'normal' || driveState === 'rerouted' || driveState === 'no_charge'}
+          />
+          <Pilot
+            size={64}
+            emotion={emotionFor(driveState)}
+            trigger={pilotTrigger}
+            onTriggerComplete={() => setPilotTrigger(null)}
+            showScene={false}
+          />
+        </div>
 
         {/* Speedometer */}
         <div style={{
