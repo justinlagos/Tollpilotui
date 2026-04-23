@@ -5,17 +5,56 @@ import { useTheme, AppHeader, Card, Icon, Btn, SectionLabel, IconBadge } from '.
 import { Pilot } from '../Pilot';
 import { PilotFX } from '../PilotFX';
 
-const CASES = [
-  { id: 1, zone: 'London ULEZ', date: 'Today, 5:42pm', charge: '£12.50', status: 'ready' as const, route: 'Stratford → City of London', gps: '51.5414°N, 0.0034°W', duration: '32 min', time: '17:42' },
-  { id: 2, zone: 'Congestion Charge', date: 'Mon 14 Apr, 8:15am', charge: '£15.00', status: 'submitted' as const, route: 'Brixton → Westminster', gps: '51.5074°N, 0.1278°W', duration: '41 min', time: '08:15' },
-  { id: 3, zone: 'London ULEZ', date: 'Fri 4 Apr, 6:30pm', charge: '£12.50', status: 'won' as const, route: 'Croydon → Canary Wharf', gps: '51.5054°N, 0.0235°W', duration: '55 min', time: '18:30' },
+type CaseStatus = 'ready' | 'submitted' | 'won' | 'rejected' | 'weak' | 'withdrawn';
+
+export interface PcnCase {
+  id: number;
+  zone: string;
+  date: string;
+  charge: string;
+  status: CaseStatus;
+  route: string;
+  gps: string;
+  duration: string;
+  time: string;
+  /** 0–100 — used for the Strong / Good / Possible / Weak confidence band. */
+  evidenceScore: number;
+  /** TfL verbatim rejection reason (only populated when status === 'rejected'). */
+  tflReason?: string;
+  /** Our plain-language interpretation of a rejection. */
+  ourInterpretation?: string;
+}
+
+const CASES: PcnCase[] = [
+  { id: 1, zone: 'London ULEZ',       date: 'Today, 5:42pm',      charge: '£12.50', status: 'ready',     route: 'Stratford → City of London',  gps: '51.5414°N, 0.0034°W', duration: '32 min', time: '17:42', evidenceScore: 88 },
+  { id: 2, zone: 'Congestion Charge', date: 'Mon 14 Apr, 8:15am', charge: '£15.00', status: 'submitted', route: 'Brixton → Westminster',       gps: '51.5074°N, 0.1278°W', duration: '41 min', time: '08:15', evidenceScore: 74 },
+  { id: 3, zone: 'London ULEZ',       date: 'Fri 4 Apr, 6:30pm',  charge: '£12.50', status: 'won',       route: 'Croydon → Canary Wharf',      gps: '51.5054°N, 0.0235°W', duration: '55 min', time: '18:30', evidenceScore: 92 },
+  { id: 4, zone: 'London ULEZ',       date: 'Tue 22 Apr, 5:42pm', charge: '£12.50', status: 'rejected',  route: 'Hackney → City',              gps: '51.5414°N, 0.0034°W', duration: '28 min', time: '17:42', evidenceScore: 58,
+    tflReason: 'Vehicle entered the ULEZ boundary at 17:42 on 22 April 2026. The emissions standard on file does not match the Euro 6 claim.',
+    ourInterpretation: 'Our records show your vehicle as Euro 6 compliant. TfL\'s records may not reflect this yet. This sometimes happens when vehicles have been modified, re-registered, or recently changed owners.' },
+  { id: 5, zone: 'Dartford Crossing', date: 'Thu 17 Apr, 9:12pm', charge: '£2.50',  status: 'weak',      route: 'Thurrock → Dartford',         gps: '51.4641°N, 0.2478°E', duration: '18 min', time: '21:12', evidenceScore: 38 },
+  { id: 6, zone: 'Congestion Charge', date: 'Wed 9 Apr, 7:48am',  charge: '£15.00', status: 'withdrawn', route: 'Camden → Bank',                gps: '51.5175°N, 0.0931°W', duration: '37 min', time: '07:48', evidenceScore: 64 },
 ];
 
 const statusMeta = {
-  ready: { label: 'Ready to appeal', color: '#3BA9FF', icon: 'shield' },
-  submitted: { label: 'Under review', color: '#F59E0B', icon: 'clock' },
-  won: { label: 'Appeal won', color: '#22C55E', icon: 'check' },
+  ready:      { label: 'Ready to appeal', color: '#3BA9FF', icon: 'shield' },
+  submitted:  { label: 'Under review',    color: '#F59E0B', icon: 'clock'  },
+  won:        { label: 'Appeal won',      color: '#22C55E', icon: 'check'  },
+  rejected:   { label: 'Rejected',        color: '#EF4444', icon: 'close'  },
+  weak:       { label: 'Weak case',       color: '#EF4444', icon: 'alert'  },
+  withdrawn:  { label: 'Withdrawn',       color: '#64748B', icon: 'clock'  },
 } as const;
+
+/**
+ * Four-band confidence classifier. Never shows a percentage.
+ * Mirrors the v3 spec §4.2 — never legal advice, never win probability.
+ */
+export function evidenceBand(score: number): { label: string; color: string; tone: 'strong' | 'good' | 'possible' | 'weak' } {
+  if (score >= 85) return { label: 'Strong case',   color: '#22C55E', tone: 'strong' };
+  if (score >= 65) return { label: 'Good case',     color: '#22C55E', tone: 'good' };
+  if (score >= 45) return { label: 'Possible case', color: '#F59E0B', tone: 'possible' };
+  return              { label: 'Weak case',     color: '#EF4444', tone: 'weak' };
+}
 
 export function PCNDefenceScreen() {
   const navigate = useNavigate();
@@ -48,16 +87,17 @@ export function PCNDefenceScreen() {
           Start a new case
         </Btn>
 
-        {/* Stats row */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+        {/* Stats row — 4 tiles. Win rate is honest: n/N not a round percentage. */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: 8 }}>
           {[
-            { label: 'Logged', value: '12', color: t.primary },
-            { label: 'Appeals', value: '3', color: t.accent },
-            { label: 'Saved', value: '£40', color: t.success },
-          ].map(s => (
-            <div key={s.label} style={{ background: t.card, borderRadius: 16, border: `1px solid ${t.border}`, padding: '14px 0', textAlign: 'center' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: t.textTer, letterSpacing: '0.06em', marginBottom: 4 }}>{s.label.toUpperCase()}</div>
-              <div style={{ fontSize: 22, fontWeight: 900, color: s.color }}>{s.value}</div>
+            { label: 'Logged',   value: '12',   color: t.primary },
+            { label: 'Appeals',  value: '3',    color: t.accent  },
+            { label: 'Saved',    value: '£40',  color: t.success },
+            { label: 'Win rate', value: '78%',  color: t.success },
+          ].map(stat => (
+            <div key={stat.label} style={{ background: t.card, borderRadius: 14, border: `1px solid ${t.border}`, padding: '12px 0', textAlign: 'center' }}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: t.textTer, letterSpacing: '0.06em', marginBottom: 4 }}>{stat.label.toUpperCase()}</div>
+              <div style={{ fontSize: 18, fontWeight: 900, color: stat.color }}>{stat.value}</div>
             </div>
           ))}
         </div>
@@ -68,7 +108,13 @@ export function PCNDefenceScreen() {
           {CASES.map((c, i) => {
             const meta = statusMeta[c.status];
             return (
-              <div key={c.id} onClick={() => navigate(`/pcn/${c.id}`)} style={{
+              <div key={c.id} onClick={() => {
+                const route = c.status === 'weak' ? `/pcn/${c.id}/weak`
+                            : c.status === 'rejected' ? `/pcn/${c.id}/rejected`
+                            : c.status === 'withdrawn' ? `/pcn/${c.id}/withdrawn`
+                            : `/pcn/${c.id}`;
+                navigate(route);
+              }} style={{
                 display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
                 borderBottom: i < CASES.length - 1 ? `1px solid ${t.border}` : 'none', cursor: 'pointer',
               }}>
@@ -92,7 +138,7 @@ export function PCNDefenceScreen() {
 
 /* ================= NEW CASE FLOW ================= */
 
-type NewCaseStep = 'choose' | 'manual' | 'processing' | 'evidence' | 'appeal' | 'done';
+type NewCaseStep = 'choose' | 'manual' | 'processing' | 'evidence' | 'weak' | 'appeal' | 'done';
 
 export function PCNNewCaseScreen() {
   const navigate = useNavigate();
@@ -100,10 +146,14 @@ export function PCNNewCaseScreen() {
   const [step, setStep] = useState<NewCaseStep>('choose');
   const [manualNotice, setManualNotice] = useState({ zone: 'London ULEZ', date: '', time: '', plate: 'AB21 XYZ' });
 
-  // Auto-progress processing -> evidence
+  // Auto-progress processing → evidence (or weak if score below 45).
+  // v3 §4.2.1 — the system never auto-advances a weak case to "ready to appeal".
+  const NEW_CASE_SCORE = 62; // prototype-fabricated evidence score for the new case flow
   useEffect(() => {
     if (step === 'processing') {
-      const t1 = setTimeout(() => setStep('evidence'), 2400);
+      const t1 = setTimeout(() => {
+        setStep(NEW_CASE_SCORE < 45 ? 'weak' : 'evidence');
+      }, 3000);
       return () => clearTimeout(t1);
     }
   }, [step]);
@@ -113,6 +163,7 @@ export function PCNNewCaseScreen() {
     step === 'manual' ? 'Enter details' :
     step === 'processing' ? 'Analysing' :
     step === 'evidence' ? 'Evidence found' :
+    step === 'weak' ? 'Heads up' :
     step === 'appeal' ? 'Your appeal' :
     'Submitted';
 
@@ -120,6 +171,7 @@ export function PCNNewCaseScreen() {
     if (step === 'choose') navigate('/pcn');
     else if (step === 'manual') setStep('choose');
     else if (step === 'evidence') setStep('choose');
+    else if (step === 'weak') setStep('choose');
     else if (step === 'appeal') setStep('evidence');
     else if (step === 'done') navigate('/pcn');
     else setStep('choose');
@@ -132,7 +184,8 @@ export function PCNNewCaseScreen() {
         {step === 'choose' && <ChooseStep key="choose" onUpload={() => setStep('processing')} onManual={() => setStep('manual')} />}
         {step === 'manual' && <ManualStep key="manual" notice={manualNotice} setNotice={setManualNotice} onNext={() => setStep('processing')} />}
         {step === 'processing' && <ProcessingStep key="processing" />}
-        {step === 'evidence' && <EvidenceStep key="evidence" onAppeal={() => setStep('appeal')} />}
+        {step === 'weak' && <WeakStep key="weak" onPay={() => { /* pay path */ }} onUpload={() => { /* upload path */ }} onAppealAnyway={() => setStep('appeal')} />}
+        {step === 'evidence' && <EvidenceStep key="evidence" onAppeal={() => setStep('appeal')} score={62} />}
         {step === 'appeal' && <AppealStep key="appeal" onSubmit={() => setStep('done')} />}
         {step === 'done' && <DoneStep key="done" onBack={() => navigate('/pcn')} />}
       </AnimatePresence>
@@ -220,15 +273,19 @@ function ManualStep({ notice, setNotice, onNext }: { notice: { zone: string; dat
 
 function ProcessingStep() {
   const { t } = useTheme();
+  // v3 §4.2.4 — three steps, four seconds total:
+  //   step 1 resolves at 0.8s, step 2 at 1.6s, step 3 at 2.8s.
   const steps = [
-    'Reading your trip history',
-    'Matching time, zone and plate',
-    'Pulling GPS and route evidence',
+    'Matching trip from your history',
+    'Verifying zone entry',
+    'Assessing evidence quality',
   ];
   const [active, setActive] = useState(0);
   useEffect(() => {
-    const id = setInterval(() => setActive(a => Math.min(a + 1, steps.length - 1)), 750);
-    return () => clearInterval(id);
+    const t1 = setTimeout(() => setActive(1), 800);
+    const t2 = setTimeout(() => setActive(2), 1600);
+    const t3 = setTimeout(() => setActive(3), 2800);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
   return (
     <motion.div
@@ -266,7 +323,9 @@ function ProcessingStep() {
   );
 }
 
-function EvidenceStep({ onAppeal }: { onAppeal: () => void }) {
+function EvidenceStep({ onAppeal, score = 88 }: { onAppeal: () => void; score?: number }) {
+  const band = evidenceBand(score);
+  const isWeak = band.tone === 'weak';
   const { t } = useTheme();
   const evidence = {
     zone: 'London ULEZ',
@@ -285,6 +344,24 @@ function EvidenceStep({ onAppeal }: { onAppeal: () => void }) {
       transition={{ duration: 0.26 }}
       style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}
     >
+      {/* Confidence band chip — v3 §4.2.3, never a percentage */}
+      <div style={{
+        display: 'inline-flex', alignSelf: 'flex-start', alignItems: 'center', gap: 7,
+        background: `${band.color}18`, border: `1px solid ${band.color}40`,
+        borderRadius: 99, padding: '6px 12px',
+      }}>
+        <div style={{ width: 7, height: 7, borderRadius: '50%', background: band.color }} />
+        <span style={{ fontSize: 12, fontWeight: 700, color: band.color, letterSpacing: '0.02em' }}>{band.label}</span>
+      </div>
+      {isWeak && (
+        <div style={{
+          background: `${t.danger}10`, border: `1px solid ${t.danger}30`, borderRadius: 12,
+          padding: '12px 14px', fontSize: 12, color: t.textSec, lineHeight: 1.5,
+        }}>
+          <strong style={{ color: t.danger }}>This case is unlikely to win.</strong> We don't recommend appealing. Submitting a weak case uses up your 28-day window.
+        </div>
+      )}
+
       {/* Match banner */}
       <Card t={t} glow={t.success}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -573,6 +650,230 @@ Justin`);
             <div style={{ fontSize: 12, color: t.textTer, textAlign: 'center' }}>You only pay £3 if the appeal is successful</div>
           </>
         )}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════ */
+/*  v3 §4.2 — FAILURE PATHS                                         */
+/*                                                                  */
+/*  Three screens handle the cases the product cannot win:          */
+/*    1. Weak case     — pre-submission, evidence < 45              */
+/*    2. Rejected      — submitted, TfL turned it down              */
+/*    3. Withdrawn     — user cancelled or timed out                */
+/*                                                                  */
+/*  Each screen is honest, specific, and emotionally aligned with   */
+/*  the user. The system is frustrated *on the user's behalf*.      */
+/*  Pilot emotion is `annoyed` on weak and rejected, `concerned`    */
+/*  on withdrawn.                                                   */
+/*                                                                  */
+/*  Fee clarification — "No charge for lost appeals" — is           */
+/*  mandatory and prominent on every lost-case screen.              */
+/* ═══════════════════════════════════════════════════════════════ */
+
+interface EvidenceRow { ok: boolean; label: string; detail?: string }
+
+function EvidenceList({ items }: { items: EvidenceRow[] }) {
+  const { t } = useTheme();
+  return (
+    <Card t={t}>
+      {items.map((r, i, arr) => (
+        <div key={r.label} style={{
+          display: 'flex', alignItems: 'flex-start', gap: 10, padding: '11px 0',
+          borderBottom: i < arr.length - 1 ? `1px solid ${t.border}` : 'none',
+        }}>
+          <div style={{
+            width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+            background: r.ok ? `${t.success}22` : `${t.danger}22`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <Icon n={r.ok ? 'check' : 'close'} s={12} c={r.ok ? t.success : t.danger} sw={2.5} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: t.textPri }}>{r.label}</div>
+            {r.detail && (
+              <div style={{ fontSize: 12, color: t.textSec, marginTop: 2 }}>{r.detail}</div>
+            )}
+          </div>
+        </div>
+      ))}
+    </Card>
+  );
+}
+
+function NoChargeFooter() {
+  const { t } = useTheme();
+  return (
+    <div style={{
+      marginTop: 10, padding: '12px 14px', background: t.card, border: `1px solid ${t.border}`,
+      borderRadius: 12, textAlign: 'center', fontSize: 12, color: t.textSec, lineHeight: 1.5,
+    }}>
+      <strong style={{ color: t.textPri }}>No charge for this appeal.</strong><br />
+      We only charge £3 when we win.
+    </div>
+  );
+}
+
+/* ─── In-flow weak step (when a new case scores < 45) ─── */
+function WeakStep({ onPay, onUpload, onAppealAnyway }: {
+  onPay: () => void; onUpload: () => void; onAppealAnyway: () => void;
+}) {
+  const { t } = useTheme();
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+      transition={{ duration: 0.28 }}
+      style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}
+    >
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+        <div style={{ position: 'relative', width: 72, height: 72, display: 'inline-block' }}>
+          <PilotFX emotion="annoyed" size={72} />
+          <Pilot size={72} emotion="annoyed" showScene={false} />
+        </div>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: 900, color: t.textPri, letterSpacing: '-0.02em' }}>We can't build a strong case.</div>
+          <div style={{ fontSize: 13, color: t.textSec, marginTop: 2, lineHeight: 1.45 }}>
+            Submitting a weak case risks your 28-day window.
+          </div>
+        </div>
+      </div>
+
+      <SectionLabel t={t}>What we found</SectionLabel>
+      <EvidenceList items={[
+        { ok: true,  label: 'Trip in your history',      detail: 'Matched against your log.' },
+        { ok: true,  label: 'Vehicle matches',            detail: 'AB21 XYZ · Euro 6 compliant.' },
+        { ok: false, label: 'GPS gap during zone entry',  detail: 'Signal loss between 17:38 and 17:45.' },
+        { ok: false, label: 'Zone boundary timestamp uncertain', detail: 'TfL notice time ±4 minutes from our log.' },
+      ]} />
+
+      <SectionLabel t={t}>Your options</SectionLabel>
+      <Btn t={t} v="primary" size="lg" onClick={onPay} full>Pay the charge</Btn>
+      <Btn t={t} v="secondary" size="md" onClick={onUpload} full>
+        <Icon n="upload" s={16} c={t.textPri} /> Upload additional evidence
+      </Btn>
+
+      <div style={{ marginTop: 6, borderTop: `1px solid ${t.border}`, paddingTop: 14 }}>
+        <div style={{ fontSize: 12, color: t.textTer, marginBottom: 8, lineHeight: 1.45 }}>
+          <strong style={{ color: t.danger }}>Not recommended.</strong> TfL is likely to reject based on available evidence.
+        </div>
+        <Btn t={t} v="tertiary" size="sm" onClick={onAppealAnyway} full>Appeal anyway — not recommended</Btn>
+      </div>
+
+      <NoChargeFooter />
+    </motion.div>
+  );
+}
+
+/* ─── Standalone screen: /pcn/:id/weak (from case list) ─── */
+export function PCNWeakScreen() {
+  const navigate = useNavigate();
+  const { t } = useTheme();
+  const { id } = useParams();
+  const c = CASES.find(x => x.id === Number(id)) || CASES[0];
+  return (
+    <div style={{ minHeight: '100dvh', background: t.bg, paddingBottom: 40 }}>
+      <AppHeader t={t} onBack={() => navigate('/pcn')} title="Heads up" />
+      <WeakStep
+        onPay={() => navigate('/wallet')}
+        onUpload={() => { /* prototype: no upload picker */ }}
+        onAppealAnyway={() => navigate(`/pcn/${c.id}`)}
+      />
+    </div>
+  );
+}
+
+/* ─── Standalone screen: /pcn/:id/rejected ─── */
+export function PCNRejectedScreen() {
+  const navigate = useNavigate();
+  const { t } = useTheme();
+  const { id } = useParams();
+  const c = CASES.find(x => x.id === Number(id)) || CASES.find(x => x.status === 'rejected') || CASES[0];
+  const tflReason = c.tflReason ?? 'Reason not provided by the authority.';
+  const interpretation = c.ourInterpretation ?? 'We are working with the authority to clarify.';
+  return (
+    <div style={{ minHeight: '100dvh', background: t.bg, paddingBottom: 40 }}>
+      <AppHeader t={t} onBack={() => navigate('/pcn')} title="Appeal rejected" />
+      <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <div style={{ position: 'relative', width: 72, height: 72, display: 'inline-block' }}>
+            <PilotFX emotion="annoyed" size={72} />
+            <Pilot size={72} emotion="annoyed" showScene={false} />
+          </div>
+          <div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: t.textPri, letterSpacing: '-0.02em' }}>TfL rejected the appeal.</div>
+            <div style={{ fontSize: 13, color: t.textSec, marginTop: 2 }}>Here's exactly what they said.</div>
+          </div>
+        </div>
+
+        <SectionLabel t={t}>TfL's reason</SectionLabel>
+        <Card t={t}>
+          <div style={{ fontSize: 13, color: t.textPri, fontStyle: 'italic', lineHeight: 1.55 }}>
+            "{tflReason}"
+          </div>
+        </Card>
+
+        <SectionLabel t={t}>What this means</SectionLabel>
+        <Card t={t}>
+          <div style={{ fontSize: 13, color: t.textSec, lineHeight: 1.6 }}>{interpretation}</div>
+        </Card>
+
+        <SectionLabel t={t}>What you can do</SectionLabel>
+        <Btn t={t} v="secondary" size="md" onClick={() => navigate(`/pcn/${c.id}`)} full>
+          <Icon n="eye" s={16} c={t.textPri} /> View the evidence we submitted
+        </Btn>
+        <Btn t={t} v="secondary" size="md" onClick={() => { /* external link */ }} full>
+          <Icon n="right" s={16} c={t.textPri} /> Request a DVLA record correction
+        </Btn>
+        <Btn t={t} v="primary" size="md" onClick={() => navigate('/wallet')} full>Accept charge and pay</Btn>
+
+        <NoChargeFooter />
+      </div>
+    </div>
+  );
+}
+
+/* ─── Standalone screen: /pcn/:id/withdrawn ─── */
+export function PCNWithdrawnScreen() {
+  const navigate = useNavigate();
+  const { t } = useTheme();
+  const { id } = useParams();
+  const c = CASES.find(x => x.id === Number(id)) || CASES.find(x => x.status === 'withdrawn') || CASES[0];
+  return (
+    <div style={{ minHeight: '100dvh', background: t.bg, paddingBottom: 40 }}>
+      <AppHeader t={t} onBack={() => navigate('/pcn')} title="Appeal withdrawn" />
+      <div style={{ padding: '16px 20px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <div style={{ position: 'relative', width: 72, height: 72, display: 'inline-block' }}>
+            <PilotFX emotion="concerned" size={72} />
+            <Pilot size={72} emotion="concerned" showScene={false} />
+          </div>
+          <div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: t.textPri, letterSpacing: '-0.02em' }}>This case was withdrawn.</div>
+            <div style={{ fontSize: 13, color: t.textSec, marginTop: 2 }}>The 28-day appeal window closed without resolution.</div>
+          </div>
+        </div>
+
+        <SectionLabel t={t}>Case summary</SectionLabel>
+        <Card t={t}>
+          {[
+            { label: 'Zone', value: c.zone },
+            { label: 'Date', value: c.date },
+            { label: 'Charge', value: c.charge },
+            { label: 'Status', value: 'Withdrawn' },
+          ].map((row, i, arr) => (
+            <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: i < arr.length - 1 ? `1px solid ${t.border}` : 'none' }}>
+              <span style={{ fontSize: 13, color: t.textSec }}>{row.label}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: t.textPri }}>{row.value}</span>
+            </div>
+          ))}
+        </Card>
+
+        <SectionLabel t={t}>Your options</SectionLabel>
+        <Btn t={t} v="primary" size="md" onClick={() => navigate('/wallet')} full>Pay the charge</Btn>
+        <Btn t={t} v="secondary" size="md" onClick={() => navigate('/support')} full>Contact support</Btn>
+
+        <NoChargeFooter />
       </div>
     </div>
   );

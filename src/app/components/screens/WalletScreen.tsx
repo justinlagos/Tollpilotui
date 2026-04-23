@@ -175,10 +175,38 @@ function Overview({ card, autopay, setAutopay, onAdd, onChargeDemo, onReceipt }:
         ))}
       </Card>
 
-      {/* Receipts */}
+      {/* LEDGER — v3 §5.3: positions wallet as the structured record, not a payment utility */}
       {card && (
         <>
-          <SectionLabel t={t}>Recent receipts</SectionLabel>
+          <div style={{
+            fontSize: 11, fontWeight: 700, color: t.textTer,
+            letterSpacing: '0.08em', marginTop: 6,
+          }}>
+            YOUR DRIVING LEDGER · THIS MONTH
+          </div>
+
+          <Card t={t}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+              {[
+                { label: 'Avoided',  value: '£37.50', color: t.success, sub: '3 reroutes' },
+                { label: 'Paid',     value: '£30.00', color: t.primary, sub: '3 charges' },
+                { label: 'Disputed', value: '£12.50', color: t.warn,    sub: '1 case open' },
+              ].map(m => (
+                <div key={m.label} style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: t.textTer, letterSpacing: '0.08em', marginBottom: 4 }}>{m.label.toUpperCase()}</div>
+                  <div style={{ fontSize: 18, fontWeight: 900, color: m.color, letterSpacing: '-0.02em' }}>{m.value}</div>
+                  <div style={{ fontSize: 10, color: t.textTer, marginTop: 2 }}>{m.sub}</div>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          <div>
+            <SectionLabel t={t}>Recent charges</SectionLabel>
+            <div style={{ fontSize: 11, color: t.textTer, margin: '0 0 6px 2px' }}>
+              Every charge, every receipt, structured and exportable.
+            </div>
+          </div>
           <Card t={t} pad={0} style={{ overflow: 'hidden' }}>
             {MOCK_RECEIPTS.map((r, i) => (
               <div key={r.id} onClick={onReceipt} style={{
@@ -197,6 +225,25 @@ function Overview({ card, autopay, setAutopay, onAdd, onChargeDemo, onReceipt }:
               </div>
             ))}
           </Card>
+
+          <button
+            onClick={() => alert('HMRC-ready CSV export of your entire driving cost history. Production only.')}
+            title="HMRC-ready CSV export of your entire driving cost history"
+            style={{
+              background: 'none', border: `1px dashed ${t.border}`, borderRadius: 12,
+              padding: '12px 14px', cursor: 'pointer', color: t.primary,
+              fontSize: 13, fontWeight: 700, letterSpacing: '-0.005em',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              marginTop: 4,
+            }}
+          >
+            Export all records <Icon n="right" s={14} c={t.primary} />
+          </button>
+
+          <div style={{ fontSize: 11, color: t.textTer, textAlign: 'center', lineHeight: 1.5, marginTop: 2 }}>
+            We don't hold funds. We don't store card numbers.<br />
+            Stripe does. We surface what you paid.
+          </div>
         </>
       )}
     </motion.div>

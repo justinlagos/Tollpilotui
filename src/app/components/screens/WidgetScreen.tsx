@@ -91,6 +91,40 @@ export function WidgetScreen() {
           </div>
         </Card>
 
+        {/* v3 §5.5 — dependency disclosure.
+            The widget is the surface of a multi-layer system. Make the stack visible. */}
+        <SectionLabel t={t}>What this depends on</SectionLabel>
+        <Card t={t} pad={0} style={{ overflow: 'hidden' }}>
+          {[
+            { label: 'Your usual commute',        detail: 'Detected automatically',    chip: 'detected', color: t.success },
+            { label: 'TfL live zone pricing',     detail: 'Refreshed every 15 min',    chip: 'live',     color: t.success },
+            { label: 'Notification permission',   detail: 'Needed for the morning cue', chip: notifEnabled ? 'on' : 'off', color: notifEnabled ? t.success : t.warn },
+            { label: 'Widget placement',          detail: 'You add it to your lock screen', chip: enabled ? 'on' : 'off', color: enabled ? t.success : t.warn },
+          ].map((row, i, arr) => (
+            <div key={row.label} style={{
+              display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px',
+              borderBottom: i < arr.length - 1 ? `1px solid ${t.border}` : 'none',
+            }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: t.textPri }}>{row.label}</div>
+                <div style={{ fontSize: 11, color: t.textSec, marginTop: 1 }}>{row.detail}</div>
+              </div>
+              <div style={{
+                background: `${row.color}22`, color: row.color,
+                borderRadius: 99, padding: '3px 10px',
+                fontSize: 10, fontWeight: 700, letterSpacing: '0.06em',
+                textTransform: 'uppercase',
+              }}>{row.chip}</div>
+            </div>
+          ))}
+        </Card>
+        <div style={{
+          fontSize: 11, color: t.textTer, lineHeight: 1.55,
+          padding: '0 4px', marginTop: -4,
+        }}>
+          If any of these are unavailable, the widget shows its last cached prediction with a timestamp.
+        </div>
+
         <SectionLabel t={t}>How to add it</SectionLabel>
         <Card t={t}>
           {[

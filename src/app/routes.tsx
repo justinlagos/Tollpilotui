@@ -19,11 +19,13 @@ import { AddVehicleScreen } from './components/screens/AddVehicleScreen';
 import { NotificationsScreen } from './components/screens/NotificationsScreen';
 import { FleetScreen } from './components/screens/FleetScreen';
 import { PilotDemoScreen } from './components/screens/PilotDemoScreen';
-import { PCNDefenceScreen, PCNDetailScreen, PCNNewCaseScreen } from './components/screens/PCNDefenceScreen';
+import { PCNDefenceScreen, PCNDetailScreen, PCNNewCaseScreen, PCNWeakScreen, PCNRejectedScreen, PCNWithdrawnScreen } from './components/screens/PCNDefenceScreen';
 import { MileageScreen } from './components/screens/MileageScreen';
 import { TollScoreScreen } from './components/screens/TollScoreScreen';
 import { DailyCommuteScreen } from './components/screens/DailyCommuteScreen';
 import { ParkingScreen } from './components/screens/ParkingScreen';
+import { DebugTodayScreen } from './components/screens/DebugTodayScreen';
+import { DebugMenuScreen } from './components/screens/DebugMenuScreen';
 import {
   ForgotPasswordScreen, ResetPasswordScreen, SupportScreen,
   PrivacyScreen, TermsScreen, DeleteAccountScreen,
@@ -76,10 +78,15 @@ export const router = createBrowserRouter([
   { path: '/pcn', Component: PCNDefenceScreen },
   { path: '/pcn/new', Component: PCNNewCaseScreen },
   { path: '/pcn/:id', Component: PCNDetailScreen },
+  { path: '/pcn/:id/weak', Component: PCNWeakScreen },
+  { path: '/pcn/:id/rejected', Component: PCNRejectedScreen },
+  { path: '/pcn/:id/withdrawn', Component: PCNWithdrawnScreen },
   { path: '/mileage', Component: MileageScreen },
   { path: '/tollscore', Component: TollScoreScreen },
   { path: '/daily-commute', Component: DailyCommuteScreen },
   { path: '/parking', Component: ParkingScreen },
+  { path: '/debug', Component: DebugMenuScreen },
+  { path: '/debug/today', Component: DebugTodayScreen },
   { path: '/wallet', Component: WalletScreen },
   { path: '/widget', Component: WidgetScreen },
   // Account

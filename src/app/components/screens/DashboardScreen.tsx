@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
+import { useLocation } from 'react-router';
 import { useTheme, Icon, Card, UKPlate, IconBadge, SectionLabel, BottomNav, Logo, OfflineBanner } from '../tp';
 import { Pilot } from '../Pilot';
+import { TodayCard } from '../TodayCard';
+import { getTodayConfidence, parseConfidenceOverride } from '../../lib/todayConfidence';
 import { PilotFX } from '../PilotFX';
 import { getBaseState } from '../../lib/emotionStateMachine';
 
@@ -13,6 +16,9 @@ const MAX = Math.max(...MONTHS.map(m => m.a));
 const totalSaved = MONTHS.reduce((s, m) => s + m.a, 0);
 
 export function DashboardScreen() {
+  const location = useLocation();
+  const todayOverride = parseConfidenceOverride(location.search);
+  const todayConfidence = getTodayConfidence(todayOverride);
   const navigate = useNavigate();
   const { t, theme, toggleTheme } = useTheme();
   const [motState] = useState<'valid' | 'due' | 'expired'>('due');
@@ -104,38 +110,8 @@ export function DashboardScreen() {
           </div>
         </Card>
 
-        {/* "TODAY" intelligence card — knows your usual + the £0 alt */}
-        <Card
-          t={t}
-          onClick={() => navigate('/compare')}
-          glow={t.primary}
-          style={{ cursor: 'pointer' }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: t.primary, letterSpacing: '0.08em' }}>TODAY</div>
-            <div style={{ fontSize: 11, fontWeight: 600, color: t.textTer }}>Auto-detected · Wed, 08:12</div>
-          </div>
-          <div style={{ fontSize: 14, color: t.textSec, marginBottom: 6 }}>
-            Your usual route today costs
-          </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 14 }}>
-            <div style={{ fontSize: 36, fontWeight: 900, color: t.danger, letterSpacing: '-0.03em', lineHeight: 1 }}>£12.50</div>
-            <div style={{ fontSize: 13, color: t.textTer }}>ULEZ + Congestion</div>
-          </div>
-          <div style={{
-            background: `${t.success}15`, borderRadius: 14, border: `1px solid ${t.success}30`,
-            padding: '12px 14px', display: 'flex', alignItems: 'center', gap: 12,
-          }}>
-            <div style={{ width: 36, height: 36, borderRadius: 11, background: `${t.success}22`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon n="route" s={18} c={t.success} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 14, fontWeight: 800, color: t.textPri }}>£0 alternative available</div>
-              <div style={{ fontSize: 12, color: t.textSec }}>+6 mins · avoids the zone</div>
-            </div>
-            <Icon n="right" s={18} c={t.success} />
-          </div>
-        </Card>
+        {/* Today card — four confidence states driven by lib/todayConfidence */}
+        <TodayCard confidence={todayConfidence} />
 
         {/* PRIMARY ACTIONS — Start Drive + Plan Route */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
